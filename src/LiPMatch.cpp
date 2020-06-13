@@ -1,81 +1,1829 @@
+//#include <LiPMatch.h>
+//#include <pcl/filters/radius_outlier_removal.h>
+//#include <pcl/filters/statistical_outlier_removal.h>
+//
+//using namespace std;
+//using namespace Eigen;
+//using namespace LiPMatch_ns;
+//
+//pcl::PointCloud<pcl::PointXYZI>::Ptr map_structure_points(new pcl::PointCloud<pcl::PointXYZI>());
+//pcl::PointCloud<pcl::PointXYZI>::Ptr map_vehicle_points(new pcl::PointCloud<pcl::PointXYZI>());
+//pcl::PointCloud<pcl::PointXYZI>::Ptr map_cylinder_points(new pcl::PointCloud<pcl::PointXYZI>());
+//
+//std::shared_ptr<Maps_keyframe<float>> maps = std::make_shared<Maps_keyframe<float>>();
+//
+//
+//
+//
+//LiPMatch::LiPMatch() : LiPMatch_stop(false), LiPMatch_finished(false)
+//{
+//    std::cout<<"loading structure points ..."<<std::endl;
+//    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_structure_points.pcd", *map_structure_points);
+//    std::cout<<"loading vehicle points ..."<<std::endl;
+//    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_vehicle_points.pcd", *map_vehicle_points);
+//    std::cout<<"loading cylinder points ..."<<std::endl;
+//    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_cylinder_points.pcd", *map_cylinder_points);
+//
+//    vector<Vehicle> detectedLocalVehicles;
+//    vector<Pole> detectedLocalPoles;
+//    vector<Plane> detectedLocalPlanes;
+//
+//    pcl::PCA< pcl::PointXYZI > pca;
+//    //聚类
+//    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
+//    std::vector<pcl::PointIndices> cluster_indices_vehicle;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_vehicle;
+//    ec_vehicle.setClusterTolerance (0.202);
+//    ec_vehicle.setMinClusterSize (85);
+//    ec_vehicle.setMaxClusterSize (1500);
+//    ec_vehicle.setSearchMethod (tree);
+//    ec_vehicle.setInputCloud(map_vehicle_points);
+//    ec_vehicle.extract (cluster_indices_vehicle);
+//
+//    int colorid = 0;
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_vehicle.begin (); it != cluster_indices_vehicle.end (); ++it)
+//    {
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_vehicle(new pcl::PointCloud<pcl::PointXYZI>());
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            map_vehicle_points->points[*pit].intensity = colorid;
+//            laserCloudNgAftEe_vehicle->points.push_back (map_vehicle_points->points[*pit]);
+//        }
+//        pca.setInputCloud(laserCloudNgAftEe_vehicle);
+//        Eigen::VectorXf eigenVal = pca.getEigenValues();
+//
+//        if (eigenVal[2] / eigenVal[0] < 0.005)
+//            continue;
+//
+////        mapToShow += *laserCloudNgAftEe_vehicle;
+//
+//        colorid++;
+//
+////        std::cout<<eigenVal[0]<<" "<<eigenVal[1]<<" "<<eigenVal[2]<<std::endl;
+//
+//        Vehicle vc;
+//        vc.VehiclePointCloudPtr = laserCloudNgAftEe_vehicle;
+////        vc.keyFrameId = keyFrameCount;
+//        vc.calcCenterAndElongation();
+//        detectedLocalVehicles.push_back(vc);
+//    }
+//
+//    observedVehicles.clear();
+//    vVehicles.clear();
+//
+//    for (size_t i = 0; i < detectedLocalVehicles.size (); i++)
+//    {
+//        detectedLocalVehicles[i].id = vVehicles.size();
+//        for(set<unsigned>::iterator it = observedVehicles.begin(); it != observedVehicles.end(); it++)
+//        {
+//            detectedLocalVehicles[i].neighborVehicles[*it] = 1;
+//            vVehicles[*it].neighborVehicles[detectedLocalVehicles[i].id] = 1;
+//        }
+//        observedVehicles.insert(detectedLocalVehicles[i].id);
+//        vVehicles.push_back(detectedLocalVehicles[i]);
+//    }
+//
+//    std::cout<<"vVehicles.size() "<<vVehicles.size()<<std::endl;
+//    maps->vVehicles = vVehicles;
+//
+//    //聚类
+//    std::vector<pcl::PointIndices> cluster_indices_nature;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
+//    ec_nature.setClusterTolerance (0.75);
+//    ec_nature.setMinClusterSize (20);
+//    ec_nature.setMaxClusterSize (750);
+//    ec_nature.setSearchMethod (tree);
+//    ec_nature.setInputCloud (map_cylinder_points);
+//    ec_nature.extract (cluster_indices_nature);
+//
+//    colorid = 0;
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_nature.begin (); it != cluster_indices_nature.end (); ++it)
+//    {
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_nature(new pcl::PointCloud<pcl::PointXYZI>());
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            map_cylinder_points->points[*pit].intensity = colorid;
+//            laserCloudNgAftEe_nature->points.push_back (map_cylinder_points->points[*pit]);
+//        }
+//        pca.setInputCloud(laserCloudNgAftEe_nature);
+//        Eigen::VectorXf eigenVal = pca.getEigenValues();
+//
+//        if (eigenVal[1] / eigenVal[0] > 0.17)
+//            continue;
+//
+////        mapToShow += *laserCloudNgAftEe_nature;
+//        colorid++;
+//
+//        Pole vc;
+//        vc.PolePointCloudPtr = laserCloudNgAftEe_nature;
+////        vc.keyFrameId = keyFrameCount;
+//        vc.calcCenterAndElongation();
+//
+//        detectedLocalPoles.push_back(vc);
+//    }
+//
+//    observedPoles.clear();
+//    vPoles.clear();
+//
+//    for (size_t i = 0; i < detectedLocalPoles.size (); i++)
+//    {
+//        detectedLocalPoles[i].id = vPoles.size();
+//
+//        // Update co-visibility graph
+//        for(set<unsigned>::iterator it = observedPoles.begin(); it != observedPoles.end(); it++)
+//        {
+//            detectedLocalPoles[i].neighborPoles[*it] = 1;
+//            vPoles[*it].neighborPoles[detectedLocalPoles[i].id] = 1;
+//        }
+//        observedPoles.insert(detectedLocalPoles[i].id);
+//        vPoles.push_back(detectedLocalPoles[i]);
+//    }
+//
+//    std::cout<<"vPoles.size() "<<vPoles.size()<<std::endl;
+//    maps->vPoles = vPoles;
+//
+//
+//    pcl::VoxelGrid<pcl::PointXYZI> gridMap;
+//    gridMap.setLeafSize(0.8,0.8,0.8);
+//    gridMap.setInputCloud(map_structure_points);
+//    gridMap.filter(*map_structure_points);
+//
+//    colorid = 0;
+//    //聚类
+//    std::vector<pcl::PointIndices> cluster_indices;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+//    ec.setClusterTolerance (0.85);
+//    ec.setMinClusterSize (20);
+//    ec.setMaxClusterSize (150000);
+//    ec.setSearchMethod (tree);
+//    ec.setInputCloud (map_structure_points);
+//    ec.extract (cluster_indices);
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe(new pcl::PointCloud<pcl::PointXYZI>());
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+//    {
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            map_structure_points->points[*pit].intensity = colorid;
+//            laserCloudNgAftEe->points.push_back (map_structure_points->points[*pit]);
+//        }
+//        colorid++;
+//    }
+//
+//
+//    //区域增长法提取激光点云中的平面
+//    pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+//    pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> normal_estimator;
+//    normal_estimator.setSearchMethod (tree);
+//    normal_estimator.setInputCloud (laserCloudNgAftEe);
+//    normal_estimator.setKSearch (6);
+//    normal_estimator.compute (*normals);
+//
+//    pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
+//    reg.setMinClusterSize (20);
+//    reg.setMaxClusterSize (1000000);
+//    reg.setSearchMethod (tree);
+//    reg.setNumberOfNeighbours (15);
+//    reg.setInputCloud (laserCloudNgAftEe);
+//    reg.setInputNormals (normals);
+//    reg.setSmoothnessThreshold (12.0 / 180.0 * M_PI);
+//    reg.setCurvatureThreshold (9.0);
+//
+//    std::vector <pcl::PointIndices> clusters;
+//    reg.extract (clusters);
+//
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftReg(new pcl::PointCloud<pcl::PointXYZI>());
+//    //创建一个模型参数对象，用于记录结果
+//    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+//    //inliers表示误差能容忍的点 记录的是点云的序号
+//    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+//    // 创建一个分割器
+//    pcl::SACSegmentation<pcl::PointXYZI> seg;
+//    // Optional，这个设置可以选定结果平面展示的点是分割掉的点还是分割剩下的点。
+//    seg.setOptimizeCoefficients(true);
+//    // Mandatory-设置目标几何形状areSameVehicle
+//    seg.setModelType(pcl::SACMODEL_PLANE);
+//    //分割方法：随机采样法
+//    seg.setMethodType(pcl::SAC_RANSAC);
+//    //设置误差容忍范围，也就是我说过的阈值
+//    seg.setDistanceThreshold(0.1);
+//
+//    colorid = 0;
+//    for (size_t i = 0 ; i < clusters.size() ; ++i)
+//    {
+//        Plane plane;
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr pointsOnPlane(new pcl::PointCloud<pcl::PointXYZI>());
+//        pointsOnPlane->points.clear();
+//
+//        for (size_t j = 0 ; j < clusters[i].indices.size() ; ++j)
+//        {
+//            pcl::PointXYZI tmpPoint;
+//            tmpPoint.x = laserCloudNgAftEe->points[clusters[i].indices[j]].x;
+//            tmpPoint.y = laserCloudNgAftEe->points[clusters[i].indices[j]].y;
+//            tmpPoint.z = laserCloudNgAftEe->points[clusters[i].indices[j]].z;
+//            tmpPoint.intensity = i;
+//            pointsOnPlane->points.push_back(tmpPoint);
+//            laserCloudNgAftReg->points.push_back(tmpPoint);
+//        }
+//
+//        //输入点云
+//        seg.setInputCloud(pointsOnPlane);
+//        //分割点云，获得平面和法向量
+//        seg.segment(*inliers, *coefficients);
+//
+//        double planen[4];
+//
+//
+//        planen[0] = coefficients->values[0];
+//        planen[1] = coefficients->values[1];
+//        planen[2] = coefficients->values[2];
+//        planen[3] = -1.0 * coefficients->values[3];
+//
+////        std::cout<<"planen[0] "<<planen[0]<<" planen[1] "<<planen[1]<<" planen[2] "<<planen[2]<<" planen[3] "<<planen[3]<<std::endl;
+////        std::cout<<planen[0]*planen[0]+planen[1]*planen[1]+planen[2]*planen[2]<<std::endl;
+//
+//        plane.v3normal = Vector3f(planen[0], planen[1], planen[2]);
+//        plane.d = planen[3];
+//        pcl::copyPointCloud(*pointsOnPlane, *plane.planePointCloudPtr);
+//
+//        float colors[3] = {0.1,0.5,0.85};
+//
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudInlier(new pcl::PointCloud<pcl::PointXYZI>());
+//
+//        for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
+//        {
+//            pointsOnPlane->points[*pit].intensity = colors[colorid % 3];
+//            laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
+//        }
+//
+//        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
+//
+//        colorid++;
+//
+//
+//        plane.calcConvexHull(plane.planePointCloudPtr,planen);
+//
+//        plane.forcePtsLayOnPlane();
+//
+//        plane.computeMassCenterAndArea();
+//        plane.calcElongationAndPpalDir();
+//
+//        plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
+//
+////        plane.keyFrameId = keyFrameCoun;
+//
+//        mapToShow += *plane.planePointCloudPtr;
+//
+//        detectedLocalPlanes.push_back(plane);
+//    }
+//
+//    std::cout<<"detectedLocalPlanes.size() "<<detectedLocalPlanes.size ()<<std::endl;
+//
+//    observedPlanes.clear();
+//    vPlanes.clear();
+//    for (size_t i = 0; i < detectedLocalPlanes.size (); i++)
+//    {
+//        detectedLocalPlanes[i].id = vPlanes.size();
+//        for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
+//        {
+//            detectedLocalPlanes[i].neighborPlanes[*it] = 1;
+//            vPlanes[*it].neighborPlanes[detectedLocalPlanes[i].id] = 1;
+//        }
+//        observedPlanes.insert(detectedLocalPlanes[i].id);
+//        vPlanes.push_back(detectedLocalPlanes[i]);
+//    }
+//
+//    std::cout<<"vPlanes.size() "<<vPlanes.size()<<std::endl;
+//
+//    maps->vPlanes = vPlanes;
+//
+//    LiPMatch_hd = createThreadFromObjectMethod(this,&LiPMatch::run);
+//
+//    keyframe_vec.clear();
+//
+//    map_rfn.set_down_sample_resolution( 0.75 );
+//
+////    laserCloudOri_m1 += *laserCloudNgAftEe;
+////    laserCloudOri_m1 += mapToShow;
+//
+//    laserCloudOri_m1 += *map_structure_points;
+//
+////    pcl::VoxelGrid<pcl::PointXYZI> downSizeFilterTargetMap;
+////    downSizeFilterTargetMap.setLeafSize(0.50,0.50,0.50);
+////    downSizeFilterTargetMap.setInputCloud(mapToShow.makeShared());
+////    downSizeFilterTargetMap.filter(mapToShow);
+//
+//}
+//
+//
+//bool LiPMatch::arePlanesNearby(Plane &plane1, Plane &plane2, const float distThreshold)
+//{
+//    float distThres2 = distThreshold * distThreshold;
+//
+//    // First we check distances between centroids and vertex to accelerate this check
+//    if( (plane1.v3center - plane2.v3center).squaredNorm() < distThres2 )
+//        return true;
+//
+//    for(unsigned i=1; i < plane1.polygonContourPtr->size(); i++)
+//        if( (getVector3fromPointXYZ(plane1.polygonContourPtr->points[i]) - plane2.v3center).squaredNorm() < distThres2 )
+//            return true;
+//
+//    for(unsigned j=1; j < plane2.polygonContourPtr->size(); j++)
+//        if( (plane1.v3center - getVector3fromPointXYZ(plane2.polygonContourPtr->points[j]) ).squaredNorm() < distThres2 )
+//            return true;
+//
+//    for(unsigned i=1; i < plane1.polygonContourPtr->size(); i++)
+//        for(unsigned j=1; j < plane2.polygonContourPtr->size(); j++)
+//            if( (diffPoints(plane1.polygonContourPtr->points[i], plane2.polygonContourPtr->points[j]) ).squaredNorm() < distThres2 )
+//                return true;
+//    return false;
+//}
+//
+//void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
+//{
+//    std::cout<<"new keyframe coming..."<<std::endl;
+//    static pcl::VoxelGrid<pcl::PointXYZI> grid_1;
+//    grid_1.setLeafSize(0.40,0.40,0.40);
+//
+//    grid_1.setInputCloud(c_keyframe.structurelaserCloud);
+//    grid_1.filter (*c_keyframe.structurelaserCloud);
+//
+//    grid_1.setLeafSize(0.20,0.20,0.20);
+//    grid_1.setInputCloud(c_keyframe.vehiclelaserCloud);
+//    grid_1.filter (*c_keyframe.vehiclelaserCloud);
+//
+//    grid_1.setLeafSize(0.20,0.20,0.20);
+//    grid_1.setInputCloud(c_keyframe.naturelaserCloud);
+//    grid_1.filter (*c_keyframe.naturelaserCloud);
+//
+//    double time_behinSeg = pcl::getTime();
+//
+//    //////////////////////
+//
+////    std::cout<<"bef: "<<c_keyframe.vehiclelaserCloud->points.size()<<std::endl;
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_filter(new pcl::PointCloud<pcl::PointXYZI>);
+//    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor;
+//    sor.setInputCloud(c_keyframe.vehiclelaserCloud);
+////    sor.setRadiusSearch(0.35);
+////    sor.setMinNeighborsInRadius(15);
+//    sor.setMeanK(10);   //设置在进行统计时考虑查询点邻近点数
+//    sor.setStddevMulThresh(0.1);
+//    sor.setNegative(false);
+//    sor.filter(*cloud_filter);
+//    *c_keyframe.vehiclelaserCloud = *cloud_filter;
+////    std::cout<<"aft: "<<c_keyframe.vehiclelaserCloud->points.size()<<std::endl;
+//
+//
+//    int colorid = 0;
+//    //聚类
+//    pcl::search::KdTree<pcl::PointXYZI>::Ptr treeVehicle (new pcl::search::KdTree<pcl::PointXYZI>);
+//    treeVehicle->setInputCloud (c_keyframe.vehiclelaserCloud);
+//    std::vector<pcl::PointIndices> cluster_indices_vehicle;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_vehicle;
+//    ec_vehicle.setClusterTolerance (0.21);
+////    ec.setMinClusterSize (100);
+//    ec_vehicle.setMinClusterSize (150);
+//    ec_vehicle.setMaxClusterSize (5000);
+//    ec_vehicle.setSearchMethod (treeVehicle);
+//    ec_vehicle.setInputCloud (c_keyframe.vehiclelaserCloud);
+//    ec_vehicle.extract (cluster_indices_vehicle);
+//    pcl::PCA< pcl::PointXYZI > pca;
+//
+//    vector<Vehicle> detectedLocalVehicles;
+//
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr vehiclesPointCloud(new pcl::PointCloud<pcl::PointXYZI>);
+//
+//
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_vehicle.begin (); it != cluster_indices_vehicle.end (); ++it)
+//    {
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_vehicle(new pcl::PointCloud<pcl::PointXYZI>());
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            c_keyframe.vehiclelaserCloud->points[*pit].intensity = colorid;
+//            laserCloudNgAftEe_vehicle->points.push_back (c_keyframe.vehiclelaserCloud->points[*pit]);
+//        }
+//        pca.setInputCloud(laserCloudNgAftEe_vehicle);
+//        Eigen::VectorXf eigenVal = pca.getEigenValues();
+//
+////        if (eigenVal[2] / eigenVal[0] < 0.005)
+////            continue;
+//
+//        if (eigenVal[2] / eigenVal[0] < 0.01)
+//            continue;
+//
+//        if (eigenVal[1] / eigenVal[0] < 0.01)
+//            continue;
+//
+//        *vehiclesPointCloud += *laserCloudNgAftEe_vehicle;
+//
+//        colorid++;
+//
+////        std::cout<<eigenVal[0]<<" "<<eigenVal[1]<<" "<<eigenVal[2]<<std::endl;
+//
+//        Vehicle vc;
+//        vc.VehiclePointCloudPtr = laserCloudNgAftEe_vehicle;
+//        vc.calcCenterAndElongation();
+//
+//        detectedLocalVehicles.push_back(vc);
+//
+//    }
+//
+//    observedVehicles.clear();
+//    vVehicles.clear();
+//
+//    for (size_t i = 0; i < detectedLocalVehicles.size (); i++)
+//    {
+//        detectedLocalVehicles[i].id = vVehicles.size();
+//
+//        // Update co-visibility graph
+//        for(set<unsigned>::iterator it = observedVehicles.begin(); it != observedVehicles.end(); it++)
+//        {
+//            detectedLocalVehicles[i].neighborVehicles[*it] = 1;
+//            vVehicles[*it].neighborVehicles[detectedLocalVehicles[i].id] = 1;
+//        }
+//        observedVehicles.insert(detectedLocalVehicles[i].id);
+//        vVehicles.push_back(detectedLocalVehicles[i]);
+//    }
+//
+//
+//    std::shared_ptr<Maps_keyframe<float>> mk = std::make_shared<Maps_keyframe<float>>();
+//
+//    std::cout<<"vVehicles.size() "<<vVehicles.size()<<std::endl;
+//
+//    mk->vVehicles = vVehicles;
+//
+//    //聚类
+//    pcl::search::KdTree<pcl::PointXYZI>::Ptr treeNature (new pcl::search::KdTree<pcl::PointXYZI>);
+//    treeNature->setInputCloud (c_keyframe.naturelaserCloud);
+//    std::vector<pcl::PointIndices> cluster_indices_nature;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
+//    ec_nature.setClusterTolerance (0.21);
+////    ec.setMinClusterSize (100);
+//    ec_nature.setMinClusterSize (20);
+//    ec_nature.setMaxClusterSize (500);
+//    ec_nature.setSearchMethod (treeNature);
+//    ec_nature.setInputCloud (c_keyframe.naturelaserCloud);
+//    ec_nature.extract (cluster_indices_nature);
+//    pcl::PCA< pcl::PointXYZI > pca1;
+//
+//    vector<Pole> detectedLocalPoles;
+//
+//    colorid = 0;
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_nature.begin (); it != cluster_indices_nature.end (); ++it)
+//    {
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_nature(new pcl::PointCloud<pcl::PointXYZI>());
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            c_keyframe.naturelaserCloud->points[*pit].intensity = colorid;
+//            laserCloudNgAftEe_nature->points.push_back (c_keyframe.naturelaserCloud->points[*pit]);
+//        }
+//        pca1.setInputCloud(laserCloudNgAftEe_nature);
+//        Eigen::VectorXf eigenVal = pca1.getEigenValues();
+//
+//        if (eigenVal[1] / eigenVal[0] > 0.135)
+//            continue;
+//
+//        colorid++;
+//
+//        Pole vc;
+//        vc.PolePointCloudPtr = laserCloudNgAftEe_nature;
+//        vc.keyFrameId = keyFrameCount;
+//        vc.calcCenterAndElongation();
+//
+//        detectedLocalPoles.push_back(vc);
+//
+////        std::cout<<eigenVal[0]<<" "<<eigenVal[1]<<" "<<eigenVal[2]<<std::endl;
+//
+//    }
+//
+//    observedPoles.clear();
+//    vPoles.clear();
+//
+//    for (size_t i = 0; i < detectedLocalPoles.size (); i++)
+//    {
+//        detectedLocalPoles[i].id = vPoles.size();
+//
+//        // Update co-visibility graph
+//        for(set<unsigned>::iterator it = observedPoles.begin(); it != observedPoles.end(); it++)
+//        {
+//            detectedLocalPoles[i].neighborPoles[*it] = 1;
+//            vPoles[*it].neighborPoles[detectedLocalPoles[i].id] = 1;
+//        }
+//        observedPoles.insert(detectedLocalPoles[i].id);
+//        vPoles.push_back(detectedLocalPoles[i]);
+//    }
+//
+//    std::cout<<"vPoles.size() "<<vPoles.size()<<std::endl;
+//
+//    mk->vPoles = vPoles;
+//
+//
+//    /////////////////////
+//
+//    //聚类
+//    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
+//    tree->setInputCloud (c_keyframe.structurelaserCloud);
+//    std::vector<pcl::PointIndices> cluster_indices;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+//    ec.setClusterTolerance (0.65);
+////    ec.setMinClusterSize (100);
+//    ec.setMinClusterSize (70);
+//    ec.setMaxClusterSize (150000);
+//    ec.setSearchMethod (tree);
+//    ec.setInputCloud (c_keyframe.structurelaserCloud);
+//    ec.extract (cluster_indices);
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe(new pcl::PointCloud<pcl::PointXYZI>());
+//    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+//    {
+//        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//        {
+//            laserCloudNgAftEe->points.push_back (c_keyframe.structurelaserCloud->points[*pit]);
+//        }
+//    }
+//
+////    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe(new pcl::PointCloud<pcl::PointXYZI>());
+////    laserCloudNgAftEe = c_keyframe.structurelaserCloud;
+//
+//    //区域增长法提取激光点云中的平面
+//    pcl::search::Search<pcl::PointXYZI>::Ptr treeRg (new pcl::search::KdTree<pcl::PointXYZI>);
+//    pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+//    pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> normal_estimator;
+//    normal_estimator.setSearchMethod (treeRg);
+//    normal_estimator.setInputCloud (laserCloudNgAftEe);
+//    normal_estimator.setKSearch (10);
+//    normal_estimator.compute (*normals);
+//
+//    pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
+//    reg.setMinClusterSize (70);
+////    reg.setMinClusterSize (120);
+//    reg.setMaxClusterSize (1000000);
+//    reg.setSearchMethod (treeRg);
+//    reg.setNumberOfNeighbours (20);
+//    reg.setInputCloud (laserCloudNgAftEe);
+//    reg.setInputNormals (normals);
+//    reg.setSmoothnessThreshold (9.0 / 180.0 * M_PI);
+//    reg.setCurvatureThreshold (7.0);
+//
+//    std::vector <pcl::PointIndices> clusters;
+//    reg.extract (clusters);
+//
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftReg(new pcl::PointCloud<pcl::PointXYZI>());
+//    //创建一个模型参数对象，用于记录结果
+//    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+//    //inliers表示误差能容忍的点 记录的是点云的序号
+//    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+//    // 创建一个分割器
+//    pcl::SACSegmentation<pcl::PointXYZI> seg;
+//    // Optional，这个设置可以选定结果平面展示的点是分割掉的点还是分割剩下的点。
+//    seg.setOptimizeCoefficients(true);
+//    // Mandatory-设置目标几何形状areSameVehicle
+//    seg.setModelType(pcl::SACMODEL_PLANE);
+//    //分割方法：随机采样法
+//    seg.setMethodType(pcl::SAC_RANSAC);
+//    //设置误差容忍范围，也就是我说过的阈值
+//    seg.setDistanceThreshold(0.075);
+//
+//    vector<Plane> detectedLocalPlanes;
+//
+//    pcl::PointCloud<pcl::PointXYZI>::Ptr curPlanePoints(new pcl::PointCloud<pcl::PointXYZI>());
+//
+//    for (size_t i = 0 ; i < clusters.size() ; ++i)
+//    {
+//        Plane plane;
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr pointsOnPlane(new pcl::PointCloud<pcl::PointXYZI>());
+//        pointsOnPlane->points.clear();
+//
+//        for (size_t j = 0 ; j < clusters[i].indices.size() ; ++j)
+//        {
+//            pcl::PointXYZI tmpPoint;
+//            tmpPoint.x = laserCloudNgAftEe->points[clusters[i].indices[j]].x;
+//            tmpPoint.y = laserCloudNgAftEe->points[clusters[i].indices[j]].y;
+//            tmpPoint.z = laserCloudNgAftEe->points[clusters[i].indices[j]].z;
+//            tmpPoint.intensity = i;
+//            pointsOnPlane->points.push_back(tmpPoint);
+//            laserCloudNgAftReg->points.push_back(tmpPoint);
+//        }
+//
+//        //输入点云
+//        seg.setInputCloud(pointsOnPlane);
+//        //分割点云，获得平面和法向量
+//        seg.segment(*inliers, *coefficients);
+//
+//        double planen[4];
+//
+//        planen[0] = coefficients->values[0];
+//        planen[1] = coefficients->values[1];
+//        planen[2] = coefficients->values[2];
+//        planen[3] = -1.0 * coefficients->values[3];
+//
+//        plane.v3normal = Vector3f(planen[0], planen[1], planen[2]);
+//        plane.d = planen[3];
+//        pcl::copyPointCloud(*pointsOnPlane, *plane.planePointCloudPtr);
+//
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudInlier(new pcl::PointCloud<pcl::PointXYZI>());
+//
+//        for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
+//        {
+//            laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
+//        }
+//
+//        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
+//
+//
+//        plane.calcConvexHull(plane.planePointCloudPtr,planen);
+//
+//        plane.forcePtsLayOnPlane();
+//
+//
+//        plane.computeMassCenterAndArea();
+//        plane.calcElongationAndPpalDir();
+//
+//        plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
+//
+//        *curPlanePoints += *plane.planePointCloudPtr;
+//
+//        detectedLocalPlanes.push_back(plane);
+//    }
+//
+//    laserCloudOri_m2.points.clear();
+//    laserCloudOri_m2 += *curPlanePoints;
+//
+//    // Merge detected planes with previous ones if they are the same
+//    observedPlanes.clear();
+//    vPlanes.clear();
+//
+//    for (size_t i = 0; i < detectedLocalPlanes.size (); i++)
+//    {
+//        detectedLocalPlanes[i].id = vPlanes.size();
+//
+//        // Update co-visibility graph
+//        for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
+//        {
+//            detectedLocalPlanes[i].neighborPlanes[*it] = 1;
+//            vPlanes[*it].neighborPlanes[detectedLocalPlanes[i].id] = 1;
+//        }
+//        observedPlanes.insert(detectedLocalPlanes[i].id);
+//        vPlanes.push_back(detectedLocalPlanes[i]);
+//    }
+//
+//    std::cout<<"vPlanes.size() ";
+//    std::cout<<vPlanes.size()<<std::endl;
+//
+//    mk->vPlanes = vPlanes;
+//
+////    std::cout<<"mk->m_accumulated_g_pc.size() "<<mk->m_accumulated_g_pc.size()<<std::endl;
+//
+//    mk->m_accumulated_structure_pc = *c_keyframe.structurelaserCloud;
+//    mk->m_accumulated_vehicle_pc = *c_keyframe.vehiclelaserCloud;
+//
+//
+//    keyframe_vec.push_back( mk );
+//
+//    std::shared_ptr<Maps_keyframe<float>>& last_keyframe = keyframe_vec.back();
+//
+//    std::map<unsigned, unsigned> bestMatch; bestMatch.clear();
+//
+//    Subgraph currentSubgraph1(maps->vPlanes, 0);
+//    Subgraph targetSubgraph1(last_keyframe->vPlanes, 0);
+//
+//    int unaycount;
+//    std::map<unsigned, unsigned> resultingMatch = matcher.compareSubgraphs(currentSubgraph1, targetSubgraph1,
+//                                                                                   unaycount);
+//
+//    if (matcher.allMatchGroups.size() < 1)
+//        return;
+//
+//    std::cout << "matcher.allMatchGroups.size() " << matcher.allMatchGroups.size() << std::endl;
+//
+//    int allMatchedSize;
+//
+//    int greatMatchedSize = 0;
+//    std::map<unsigned, unsigned> greatestMatch;
+//    std::map<unsigned, unsigned> allgreatestMatch;
+//
+////    laserCloudOri_m2.points.clear();
+////    laserCloudOri_m2.width = 0;
+////    laserCloudOri_m2.height = 0;
+//
+//    for (auto itemmatch : matcher.allMatchGroups) {
+//
+//        bestMatch = itemmatch;
+//
+////        std::cout << "bestMatch.size() " << bestMatch.size() << std::endl;
+//
+//        if (bestMatch.size() < 1)
+//            return;
+//
+//        std::vector <Eigen::Vector3f> kvc;
+//        std::vector <Eigen::Vector3f> lvc;
+//        std::vector <Eigen::Vector3f> kvn;
+//        std::vector <Eigen::Vector3f> lvn;
+//
+//        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+//            kvc.push_back(maps->vPlanes[it->first].v3center);
+//            lvc.push_back(last_keyframe->vPlanes[it->second].v3center);
+//            kvn.push_back(maps->vPlanes[it->first].v3normal);
+//            lvn.push_back(last_keyframe->vPlanes[it->second].v3normal);
+//        }
+//
+//
+//        //KITTI
+//        std::map<unsigned, unsigned> bestMatchVehicle;
+//        bestMatchVehicle.clear();
+//
+//        Subgraph currentSubgraph2(maps->vVehicles, 0);
+//        Subgraph targetSubgraph2(last_keyframe->vVehicles, 0);
+//
+//        unaycount = 0;
+//        std::map<unsigned, unsigned> resultingMatch1 = matcher.compareSubgraphsVehiclePlaneRef(currentSubgraph2,
+//                                                                                               targetSubgraph2,
+//                                                                                               unaycount, kvc,
+//                                                                                               lvc, kvn, lvn);
+//
+//
+//        std::vector <Eigen::Vector3f> vkvc;
+//        std::vector <Eigen::Vector3f> vlvc;
+//
+//        for (map<unsigned, unsigned>::iterator it = resultingMatch1.begin(); it != resultingMatch1.end(); it++) {
+//            vkvc.push_back(maps->vVehicles[it->first].v3center);
+//            vlvc.push_back(last_keyframe->vVehicles[it->second].v3center);
+//        }
+//
+//
+//
+//        bestMatchVehicle = resultingMatch1;
+//
+//        std::map<unsigned, unsigned> bestMatchPole;
+//        bestMatchPole.clear();
+//
+//        Subgraph currentSubgraph3(maps->vPoles, 0);
+//        Subgraph targetSubgraph3(last_keyframe->vPoles, 0);
+//
+//        matcher.v_kvc = vkvc;
+//        matcher.v_lvc = vlvc;
+//
+//        unaycount = 0;
+//        std::map<unsigned, unsigned> resultingMatch2 = matcher.compareSubgraphsPolePlaneRef(currentSubgraph3,
+//                                                                                            targetSubgraph3, unaycount,
+//                                                                                            kvc,
+//                                                                                            lvc, kvn, lvn);
+//
+//        bestMatchPole = resultingMatch2;
+//
+////        std::cout << "bestMatchPole.size() " << bestMatchPole.size() << std::endl;
+////        std::cout << "bestMatchVehicle.size() " << bestMatchVehicle.size() << std::endl;
+//
+////    laserCloudOri_m2.height = 1;
+////    laserCloudOri_m2.width = vehiclesPointCloud->points.size();
+////    laserCloudOri_m2 = *vehiclesPointCloud;
+//
+//
+////    laserCloudOri_m2.points.clear();
+////
+////        if (bestMatch.size() > 0)
+////            for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+////                laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////                laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////            }
+//
+////    std::cout<<"matcher.allwinnerMatch.size() "<<matcher.allwinnerMatch.size()<<std::endl;
+////    if (matcher.allwinnerMatch.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = matcher.allwinnerMatch.begin(); it != matcher.allwinnerMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////
+////            for (size_t k = 0 ; k < last_keyframe->vPlanes[it->second].planePointCloudPtr->points.size() ; ++k)
+////            {
+////                last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z = last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z + 10.0;
+////            }
+////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////        }
+//
+////    pcl::copyPointCloud(*vehiclesPointCloud,laserCloudOri_m2);
+//
+////    laserCloudOri_m2 += *map_cylinder_points;
+////    laserCloudOri_m2 = *map_vehicle_points;
+//
+////    laserCloudOri_m2 += *map_structure_points;
+//
+////    for (size_t k = 0 ; k < vehiclesPointCloud->points.size() ; ++k)
+////    {
+////        vehiclesPointCloud->points[k].z = vehiclesPointCloud->points[k].z + 10.0;
+////    }
+////
+////    for (size_t k = 0 ; k < curPlanePoints->points.size() ; ++k)
+////    {
+////        curPlanePoints->points[k].z = curPlanePoints->points[k].z + 10.0;
+////    }
+////    laserCloudOri_m2 += *curPlanePoints;
+//
+//        //KITTI
+//        if (bestMatch.size() < 2) {
+//            return;
+//        }
+//
+//        std::vector<int> firstINdexes;
+//        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+//            firstINdexes.push_back(it->first);
+//        }
+//
+//        pcl::PointCloud <pcl::PointXYZI> normPOints;
+//        for (int it = 0; it < firstINdexes.size(); ++it) {
+//            pcl::PointXYZI phe;
+//            phe.x = maps->vPlanes[firstINdexes[it]].v3normal(0);
+//            phe.y = maps->vPlanes[firstINdexes[it]].v3normal(1);
+//            phe.z = maps->vPlanes[firstINdexes[it]].v3normal(2);
+//            normPOints.points.push_back(phe);
+//        }
+//
+//        //聚类
+//        pcl::search::KdTree<pcl::PointXYZI>::Ptr tree1(new pcl::search::KdTree <pcl::PointXYZI>);
+//        tree1->setInputCloud(normPOints.makeShared());
+//        std::vector <pcl::PointIndices> cluster_indices2;
+//        pcl::EuclideanClusterExtraction <pcl::PointXYZI> ec1;
+//        ec1.setClusterTolerance(0.15);
+//        ec1.setMinClusterSize(1);
+//        ec1.setMaxClusterSize(100);
+//        ec1.setSearchMethod(tree1);
+//        ec1.setInputCloud(normPOints.makeShared());
+//        ec1.extract(cluster_indices2);
+//
+////        std::cout << "cluster_indices2.size() " << cluster_indices2.size() << std::endl;
+//
+//        if (cluster_indices2.size() < 2) {
+//            return;
+//        }
+//
+////    if (bestMatch.size() < 3)
+////        return;
+//
+//        allMatchedSize = bestMatch.size();
+//
+//        allMatchedSize += bestMatchVehicle.size();
+//
+//        allMatchedSize += bestMatchPole.size();
+//
+////    if (bestMatchVehicle.size() > 1)
+////    {
+////        allMatchedSize += bestMatchVehicle.size();
+////    }
+////    if (bestMatchPole.size() > 1)
+////    {
+////        allMatchedSize += bestMatchPole.size();
+////    }
+//
+//
+////    std::cout<<"comp time "<<aveTime/(pointSearchInd.size())<<std::endl;
+//
+////        std::cout << "allMatchedSize " << allMatchedSize << std::endl;
+//
+////        if (allMatchedSize > 5) {
+////            for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////
+//////            pcl::PointCloud<pcl::PointXYZI>::Ptr tempz1(new pcl::PointCloud<pcl::PointXYZI>());
+//////            *tempz1 = *maps->vPlanes[it->first].planePointCloudPtr;
+//////            for (size_t k = 0 ; k < tempz1->points.size() ; ++k)
+//////            {
+//////                tempz1->points[k].z = tempz1->points[k].z + 10.0;
+//////            }
+//////            laserCloudOri_m2 += *tempz1;
+////
+////            pcl::PointCloud<pcl::PointXYZI>::Ptr tempz(new pcl::PointCloud<pcl::PointXYZI>());
+////            *tempz = *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////            for (size_t k = 0 ; k < tempz->points.size() ; ++k)
+////            {
+////                tempz->points[k].z = tempz->points[k].z + 10.0;
+////            }
+////            laserCloudOri_m2 += *tempz;
+////        }
+////
+////            for (auto itm : bestMatch)
+////            {
+////                allgreatestMatch.insert(itm);
+////            }
+////
+////        }
+//
+////        std::cout<<allgreatestMatch.size()<<std::endl;
+//        if (allMatchedSize > greatMatchedSize)
+//        {
+//            greatMatchedSize = allMatchedSize;
+//            greatestMatch = bestMatch;
+//
+//        }
+//
+//    }
+//
+//
+//
+//
+//    allMatchedSize = greatMatchedSize;
+//    bestMatch = greatestMatch;
+//
+//
+////    laserCloudOri_m2 += *map_structure_points;
+//
+//
+//
+////    if (bestMatch.size() < 1)
+////        return;
+////
+////
+////    std::vector<Eigen::Vector3f> kvc;
+////    std::vector<Eigen::Vector3f> lvc;
+////    std::vector<Eigen::Vector3f> kvn;
+////    std::vector<Eigen::Vector3f> lvn;
+////
+////    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+////    {
+////        kvc.push_back(maps->vPlanes[it->first].v3center);
+////        lvc.push_back(last_keyframe->vPlanes[it->second].v3center);
+////        kvn.push_back(maps->vPlanes[it->first].v3normal);
+////        lvn.push_back(last_keyframe->vPlanes[it->second].v3normal);
+////    }
+////
+////
+////    //KITTI
+////    std::map<unsigned, unsigned> bestMatchVehicle; bestMatchVehicle.clear();
+////
+////    Subgraph currentSubgraph2(maps->vVehicles, 0);
+////    Subgraph targetSubgraph2(last_keyframe->vVehicles, 0);
+////
+////    unaycount = 0;
+////    std::map<unsigned, unsigned> resultingMatch1 = matcher.compareSubgraphsVehiclePlaneRef(currentSubgraph2, targetSubgraph2, unaycount, kvc,
+////                                                                                                  lvc, kvn, lvn);
+////
+////    bestMatchVehicle = resultingMatch1;
+////
+////    std::map<unsigned, unsigned> bestMatchPole; bestMatchPole.clear();
+////
+////    Subgraph currentSubgraph3(maps->vPoles, 0);
+////    Subgraph targetSubgraph3(last_keyframe->vPoles, 0);
+////
+////    unaycount = 0;
+////    std::map<unsigned, unsigned> resultingMatch2 = matcher.compareSubgraphsPolePlaneRef(currentSubgraph3, targetSubgraph3, unaycount, kvc,
+////                                                                                               lvc, kvn, lvn);
+////
+////    bestMatchPole = resultingMatch2;
+////
+////    std::cout<<"bestMatchPole.size() "<<bestMatchPole.size()<<std::endl;
+////    std::cout<<"bestMatchVehicle.size() "<<bestMatchVehicle.size()<<std::endl;
+////
+//////    laserCloudOri_m2.height = 1;
+//////    laserCloudOri_m2.width = vehiclesPointCloud->points.size();
+//////    laserCloudOri_m2 = *vehiclesPointCloud;
+////
+////
+////    laserCloudOri_m2.points.clear();
+////
+////    if (bestMatch.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////        }
+////
+//////    std::cout<<"matcher.allwinnerMatch.size() "<<matcher.allwinnerMatch.size()<<std::endl;
+//////    if (matcher.allwinnerMatch.size() > 0)
+//////        for (map<unsigned, unsigned>::iterator it = matcher.allwinnerMatch.begin(); it != matcher.allwinnerMatch.end(); it++)
+//////        {
+//////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//////
+//////            for (size_t k = 0 ; k < last_keyframe->vPlanes[it->second].planePointCloudPtr->points.size() ; ++k)
+//////            {
+//////                last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z = last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z + 10.0;
+//////            }
+//////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+//////        }
+////
+//////    pcl::copyPointCloud(*vehiclesPointCloud,laserCloudOri_m2);
+////
+//////    laserCloudOri_m2 += *map_cylinder_points;
+//////    laserCloudOri_m2 = *map_vehicle_points;
+////
+//////    laserCloudOri_m2 += *map_structure_points;
+////
+//////    for (size_t k = 0 ; k < vehiclesPointCloud->points.size() ; ++k)
+//////    {
+//////        vehiclesPointCloud->points[k].z = vehiclesPointCloud->points[k].z + 10.0;
+//////    }
+//////
+//////    for (size_t k = 0 ; k < curPlanePoints->points.size() ; ++k)
+//////    {
+//////        curPlanePoints->points[k].z = curPlanePoints->points[k].z + 10.0;
+//////    }
+//////    laserCloudOri_m2 += *curPlanePoints;
+////
+////    //KITTI
+////    if (bestMatch.size() < 2) {
+////        return;
+////    }
+////
+////    std::vector<int> firstINdexes;
+////    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+////        firstINdexes.push_back(it->first);
+////    }
+////
+////    pcl::PointCloud<pcl::PointXYZI> normPOints;
+////    for (int it = 0; it < firstINdexes.size(); ++it)
+////    {
+////        pcl::PointXYZI phe;
+////        phe.x = maps->vPlanes[firstINdexes[it]].v3normal(0);
+////        phe.y = maps->vPlanes[firstINdexes[it]].v3normal(1);
+////        phe.z = maps->vPlanes[firstINdexes[it]].v3normal(2);
+////        normPOints.points.push_back(phe);
+////    }
+////
+////    //聚类
+////    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree1(new pcl::search::KdTree<pcl::PointXYZI>);
+////    tree1->setInputCloud(normPOints.makeShared());
+////    std::vector<pcl::PointIndices> cluster_indices2;
+////    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec1;
+////    ec1.setClusterTolerance(0.15);
+////    ec1.setMinClusterSize(1);
+////    ec1.setMaxClusterSize(100);
+////    ec1.setSearchMethod(tree1);
+////    ec1.setInputCloud(normPOints.makeShared());
+////    ec1.extract(cluster_indices2);
+////
+////    std::cout<<"cluster_indices2.size() "<<cluster_indices2.size()<<std::endl;
+////
+////    if (cluster_indices2.size() < 2) {
+////        return;
+////    }
+////
+//////    if (bestMatch.size() < 3)
+//////        return;
+////
+////    int allMatchedSize = bestMatch.size();
+////
+////    allMatchedSize += bestMatchVehicle.size();
+////
+////    allMatchedSize += bestMatchPole.size();
+////
+//////    if (bestMatchVehicle.size() > 1)
+//////    {
+//////        allMatchedSize += bestMatchVehicle.size();
+//////    }
+//////    if (bestMatchPole.size() > 1)
+//////    {
+//////        allMatchedSize += bestMatchPole.size();
+//////    }
+////
+////
+//////    std::cout<<"comp time "<<aveTime/(pointSearchInd.size())<<std::endl;
+////
+//    std::cout<<"allMatchedSize "<<allMatchedSize<<std::endl;
+//
+//
+////KITTI
+//    if (allMatchedSize < 7) {
+//        return;
+//    }
+//
+//    std::cout<<"localization successful !"<<std::endl;
+////    laserCloudOri_m2.points.clear();
+//
+////    if (bestMatch.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////        }
+//
+//
+//
+//
+////    if (allgreatestMatch.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = allgreatestMatch.begin(); it != allgreatestMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////        }
+//
+//
+//
+////    if (bestMatchVehicle.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = bestMatchVehicle.begin(); it != bestMatchVehicle.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vVehicles[it->first].VehiclePointCloudPtr;
+////            laserCloudOri_m2 += *last_keyframe->vVehicles[it->second].VehiclePointCloudPtr;
+////        }
+//
+////    if (bestMatchPole.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = bestMatchPole.begin(); it != bestMatchPole.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPoles[it->first].PolePointCloudPtr;
+////            laserCloudOri_m2 += *last_keyframe->vPoles[it->second].PolePointCloudPtr;
+////        }
+//
+//}
+//
+//void LiPMatch::run()
+//{
+//    size_t numPrevKFs = 0;
+//
+//    while(!LiPMatch_stop)  // Stop loop if LiPMatch
+//    {
+//        if( numPrevKFs == frameQueue.size() )
+//        {
+//            sleep(10);
+//        }
+//        else
+//        {
+//            detectPlanesCloud( frameQueue[numPrevKFs], numPrevKFs);
+//            ++numPrevKFs;
+//        }
+//    }
+//    LiPMatch_finished = true;
+//}
+//
+//
+//
+//bool LiPMatch::stop_LiPMatch()
+//{
+//    LiPMatch_stop = true;
+//    while(!LiPMatch_finished)
+//        sleep(1);
+//
+//    cout << "Waiting for LiPMatch thread to die.." << endl;
+//
+//    joinThread(LiPMatch_hd);
+//    LiPMatch_hd.clear();
+//
+//    return true;
+//}
+//
+//LiPMatch::~LiPMatch()
+//{
+//    cout << "\n\n\nLiPMatch destructor called -> Save color information to file\n";
+//
+//    stop_LiPMatch();
+//
+//    cout << " .. LiPMatch has died." << endl;
+//}
+//
+//
+//
+//
+//
+//
+//
+
+
 #include <LiPMatch.h>
+#include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 using namespace std;
 using namespace Eigen;
 using namespace LiPMatch_ns;
 
+pcl::PointCloud<pcl::PointXYZI>::Ptr map_structure_points(new pcl::PointCloud<pcl::PointXYZI>());
+pcl::PointCloud<pcl::PointXYZI>::Ptr map_vehicle_points(new pcl::PointCloud<pcl::PointXYZI>());
+pcl::PointCloud<pcl::PointXYZI>::Ptr map_cylinder_points(new pcl::PointCloud<pcl::PointXYZI>());
+
+std::shared_ptr<Maps_keyframe<float>> maps = std::make_shared<Maps_keyframe<float>>();
+
+
+
+
+// LiPMatch::LiPMatch() : LiPMatch_stop(false), LiPMatch_finished(false)
+// {
+//     std::cout<<"loading structure points ..."<<std::endl;
+//     pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_structure_points.pcd", *map_structure_points);
+//     std::cout<<"loading vehicle points ..."<<std::endl;
+//     pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_vehicle_points.pcd", *map_vehicle_points);
+//     std::cout<<"loading cylinder points ..."<<std::endl;
+//     pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_cylinder_points.pcd", *map_cylinder_points);
+
+//     vector<Vehicle> detectedLocalVehicles;
+//     vector<Pole> detectedLocalPoles;
+//     vector<Plane> detectedLocalPlanes;
+
+//     pcl::PCA< pcl::PointXYZI > pca;
+//     //聚类
+//     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
+//     std::vector<pcl::PointIndices> cluster_indices_vehicle;
+//     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_vehicle;
+//     ec_vehicle.setClusterTolerance (0.205);
+//     ec_vehicle.setMinClusterSize (80);
+//     ec_vehicle.setMaxClusterSize (7500);
+//     ec_vehicle.setSearchMethod (tree);
+//     ec_vehicle.setInputCloud(map_vehicle_points);
+//     ec_vehicle.extract (cluster_indices_vehicle);
+
+//     int colorid = 0;
+//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_vehicle.begin (); it != cluster_indices_vehicle.end (); ++it)
+//     {
+//         pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_vehicle(new pcl::PointCloud<pcl::PointXYZI>());
+//         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//         {
+//             map_vehicle_points->points[*pit].intensity = colorid;
+//             laserCloudNgAftEe_vehicle->points.push_back (map_vehicle_points->points[*pit]);
+//         }
+//         pca.setInputCloud(laserCloudNgAftEe_vehicle);
+//         Eigen::VectorXf eigenVal = pca.getEigenValues();
+
+//         if (eigenVal[2] / eigenVal[0] < 0.01)
+//             continue;
+
+//         if (eigenVal[1] / eigenVal[0] < 0.01)
+//             continue;
+
+//         mapToShow += *laserCloudNgAftEe_vehicle;
+
+//         colorid++;
+
+//         Vehicle vc;
+//         vc.VehiclePointCloudPtr = laserCloudNgAftEe_vehicle;
+//         vc.calcCenterAndElongation();
+//         detectedLocalVehicles.push_back(vc);
+//     }
+
+//     observedVehicles.clear();
+//     vVehicles.clear();
+
+//     for (size_t i = 0; i < detectedLocalVehicles.size (); i++)
+//     {
+//         detectedLocalVehicles[i].id = vVehicles.size();
+//         for(set<unsigned>::iterator it = observedVehicles.begin(); it != observedVehicles.end(); it++)
+//         {
+//             detectedLocalVehicles[i].neighborVehicles[*it] = 1;
+//             vVehicles[*it].neighborVehicles[detectedLocalVehicles[i].id] = 1;
+//         }
+//         observedVehicles.insert(detectedLocalVehicles[i].id);
+//         vVehicles.push_back(detectedLocalVehicles[i]);
+//     }
+
+//     std::cout<<"vVehicles.size() "<<vVehicles.size()<<std::endl;
+//     maps->vVehicles = vVehicles;
+
+//     //聚类
+//     std::vector<pcl::PointIndices> cluster_indices_nature;
+//     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
+//     ec_nature.setClusterTolerance (0.75);
+//     ec_nature.setMinClusterSize (20);
+//     ec_nature.setMaxClusterSize (750);
+//     ec_nature.setSearchMethod (tree);
+//     ec_nature.setInputCloud (map_cylinder_points);
+//     ec_nature.extract (cluster_indices_nature);
+
+//     colorid = 0;
+//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_nature.begin (); it != cluster_indices_nature.end (); ++it)
+//     {
+//         pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_nature(new pcl::PointCloud<pcl::PointXYZI>());
+//         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//         {
+//             map_cylinder_points->points[*pit].intensity = colorid;
+//             laserCloudNgAftEe_nature->points.push_back (map_cylinder_points->points[*pit]);
+//         }
+//         pca.setInputCloud(laserCloudNgAftEe_nature);
+//         Eigen::VectorXf eigenVal = pca.getEigenValues();
+
+//         if (eigenVal[1] / eigenVal[0] > 0.135)
+//             continue;
+
+//         mapToShow += *laserCloudNgAftEe_nature;
+//         colorid++;
+
+//         Pole vc;
+//         vc.PolePointCloudPtr = laserCloudNgAftEe_nature;
+//         vc.calcCenterAndElongation();
+//         detectedLocalPoles.push_back(vc);
+//     }
+
+//     observedPoles.clear();
+//     vPoles.clear();
+
+//     for (size_t i = 0; i < detectedLocalPoles.size (); i++)
+//     {
+//         detectedLocalPoles[i].id = vPoles.size();
+
+//         // Update co-visibility graph
+//         for(set<unsigned>::iterator it = observedPoles.begin(); it != observedPoles.end(); it++)
+//         {
+//             detectedLocalPoles[i].neighborPoles[*it] = 1;
+//             vPoles[*it].neighborPoles[detectedLocalPoles[i].id] = 1;
+//         }
+//         observedPoles.insert(detectedLocalPoles[i].id);
+//         vPoles.push_back(detectedLocalPoles[i]);
+//     }
+
+//     std::cout<<"vPoles.size() "<<vPoles.size()<<std::endl;
+//     maps->vPoles = vPoles;
+
+// //    pcl::VoxelGrid<pcl::PointXYZI> gridMap;
+// //    gridMap.setLeafSize(0.8,0.8,0.8);
+// //    gridMap.setInputCloud(map_structure_points);
+// //    gridMap.filter(*map_structure_points);
+
+//     //聚类
+//     std::vector<pcl::PointIndices> cluster_indices;
+//     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+//     ec.setClusterTolerance (0.65);
+//     ec.setMinClusterSize (70);
+//     ec.setMaxClusterSize (150000);
+//     ec.setSearchMethod (tree);
+//     ec.setInputCloud (map_structure_points);
+//     ec.extract (cluster_indices);
+//     pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe(new pcl::PointCloud<pcl::PointXYZI>());
+//     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+//     {
+//         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+//         {
+//             laserCloudNgAftEe->points.push_back (map_structure_points->points[*pit]);
+//         }
+//     }
+
+//     //区域增长法提取激光点云中的平面
+//     pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+//     pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> normal_estimator;
+//     normal_estimator.setSearchMethod (tree);
+//     normal_estimator.setInputCloud (laserCloudNgAftEe);
+//     normal_estimator.setKSearch (10);
+//     normal_estimator.compute (*normals);
+
+//     pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
+//     reg.setMinClusterSize (70);
+//     reg.setMaxClusterSize (1000000);
+//     reg.setSearchMethod (tree);
+//     reg.setNumberOfNeighbours (20);
+//     reg.setInputCloud (laserCloudNgAftEe);
+//     reg.setInputNormals (normals);
+//     reg.setSmoothnessThreshold (9.0 / 180.0 * M_PI);
+//     reg.setCurvatureThreshold (7.0);
+
+//     std::vector <pcl::PointIndices> clusters;
+//     reg.extract (clusters);
+
+//     pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftReg(new pcl::PointCloud<pcl::PointXYZI>());
+//     //创建一个模型参数对象，用于记录结果
+//     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+//     //inliers表示误差能容忍的点 记录的是点云的序号
+//     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+//     // 创建一个分割器
+//     pcl::SACSegmentation<pcl::PointXYZI> seg;
+//     // Optional，这个设置可以选定结果平面展示的点是分割掉的点还是分割剩下的点。
+//     seg.setOptimizeCoefficients(true);
+//     // Mandatory-设置目标几何形状areSameVehicle
+//     seg.setModelType(pcl::SACMODEL_PLANE);
+//     //分割方法：随机采样法
+//     seg.setMethodType(pcl::SAC_RANSAC);
+//     //设置误差容忍范围，也就是我说过的阈值
+//     seg.setDistanceThreshold(0.075);
+
+//     colorid = 0;
+//     for (size_t i = 0 ; i < clusters.size() ; ++i)
+//     {
+//         Plane plane;
+//         pcl::PointCloud<pcl::PointXYZI>::Ptr pointsOnPlane(new pcl::PointCloud<pcl::PointXYZI>());
+//         pointsOnPlane->points.clear();
+
+//         for (size_t j = 0 ; j < clusters[i].indices.size() ; ++j)
+//         {
+//             pcl::PointXYZI tmpPoint;
+//             tmpPoint.x = laserCloudNgAftEe->points[clusters[i].indices[j]].x;
+//             tmpPoint.y = laserCloudNgAftEe->points[clusters[i].indices[j]].y;
+//             tmpPoint.z = laserCloudNgAftEe->points[clusters[i].indices[j]].z;
+//             tmpPoint.intensity = i;
+//             pointsOnPlane->points.push_back(tmpPoint);
+//             laserCloudNgAftReg->points.push_back(tmpPoint);
+//         }
+
+//         //输入点云
+//         seg.setInputCloud(pointsOnPlane);
+//         //分割点云，获得平面和法向量
+//         seg.segment(*inliers, *coefficients);
+
+//         double planen[4];
+
+
+//         planen[0] = coefficients->values[0];
+//         planen[1] = coefficients->values[1];
+//         planen[2] = coefficients->values[2];
+//         planen[3] = -1.0 * coefficients->values[3];
+
+// //        std::cout<<"planen[0] "<<planen[0]<<" planen[1] "<<planen[1]<<" planen[2] "<<planen[2]<<" planen[3] "<<planen[3]<<std::endl;
+// //        std::cout<<planen[0]*planen[0]+planen[1]*planen[1]+planen[2]*planen[2]<<std::endl;
+
+//         plane.v3normal = Vector3f(planen[0], planen[1], planen[2]);
+//         plane.d = planen[3];
+//         pcl::copyPointCloud(*pointsOnPlane, *plane.planePointCloudPtr);
+
+//         float colors[3] = {0.1,0.5,0.85};
+
+//         pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudInlier(new pcl::PointCloud<pcl::PointXYZI>());
+
+//         for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
+//         {
+//             pointsOnPlane->points[*pit].intensity = colorid;
+//             laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
+//         }
+
+//         pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
+
+//         colorid++;
+
+
+//         plane.calcConvexHull(plane.planePointCloudPtr,planen);
+
+//         // plane.forcePtsLayOnPlane();
+
+//         plane.computeMassCenterAndArea();
+//         plane.calcElongationAndPpalDir();
+
+//         plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
+
+//         mapToShow += *plane.planePointCloudPtr;
+
+//         detectedLocalPlanes.push_back(plane);
+//     }
+
+//     observedPlanes.clear();
+//     vPlanes.clear();
+//     for (size_t i = 0; i < detectedLocalPlanes.size (); i++)
+//     {
+//         detectedLocalPlanes[i].id = vPlanes.size();
+//         for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
+//         {
+//             detectedLocalPlanes[i].neighborPlanes[*it] = 1;
+//             vPlanes[*it].neighborPlanes[detectedLocalPlanes[i].id] = 1;
+//         }
+//         observedPlanes.insert(detectedLocalPlanes[i].id);
+//         vPlanes.push_back(detectedLocalPlanes[i]);
+//     }
+
+//     std::cout<<"vPlanes.size() "<<vPlanes.size()<<std::endl;
+
+//     maps->vPlanes = vPlanes;
+
+//     LiPMatch_hd = createThreadFromObjectMethod(this,&LiPMatch::run);
+
+//     keyframe_vec.clear();
+
+//     map_rfn.set_down_sample_resolution( 0.75 );
+
+// //    laserCloudOri_m1 += *laserCloudNgAftEe;
+//     laserCloudOri_m1 += mapToShow;
+
+// //    laserCloudOri_m1 += *map_structure_points;
+
+//     pcl::VoxelGrid<pcl::PointXYZI> downSizeFilterTargetMap;
+//     downSizeFilterTargetMap.setLeafSize(0.50,0.50,0.50);
+//     downSizeFilterTargetMap.setInputCloud(laserCloudOri_m1.makeShared());
+//     downSizeFilterTargetMap.filter(laserCloudOri_m1);
+
+// }
+
+
+
 
 LiPMatch::LiPMatch() : LiPMatch_stop(false), LiPMatch_finished(false)
 {
+    std::cout<<"loading structure points ..."<<std::endl;
+    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_structure_points.pcd", *map_structure_points);
+    std::cout<<"loading vehicle points ..."<<std::endl;
+    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_vehicle_points.pcd", *map_vehicle_points);
+    std::cout<<"loading cylinder points ..."<<std::endl;
+    pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/software/catkin_rangenet_ws/src/map_cylinder_points.pcd", *map_cylinder_points);
+
+    vector<Vehicle> detectedLocalVehicles;
+    vector<Pole> detectedLocalPoles;
+    vector<Plane> detectedLocalPlanes;
+
+    pcl::PCA< pcl::PointXYZI > pca;
+    //聚类
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
+    std::vector<pcl::PointIndices> cluster_indices_vehicle;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_vehicle;
+    ec_vehicle.setClusterTolerance (0.205);
+    ec_vehicle.setMinClusterSize (80);
+    ec_vehicle.setMaxClusterSize (7500);
+    ec_vehicle.setSearchMethod (tree);
+    ec_vehicle.setInputCloud(map_vehicle_points);
+    ec_vehicle.extract (cluster_indices_vehicle);
+
+    int colorid = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_vehicle.begin (); it != cluster_indices_vehicle.end (); ++it)
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_vehicle(new pcl::PointCloud<pcl::PointXYZI>());
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+        {
+            map_vehicle_points->points[*pit].intensity = colorid;
+            laserCloudNgAftEe_vehicle->points.push_back (map_vehicle_points->points[*pit]);
+        }
+        pca.setInputCloud(laserCloudNgAftEe_vehicle);
+        Eigen::VectorXf eigenVal = pca.getEigenValues();
+
+        if (eigenVal[2] / eigenVal[0] < 0.01)
+            continue;
+
+        if (eigenVal[1] / eigenVal[0] < 0.01)
+            continue;
+
+        mapToShow += *laserCloudNgAftEe_vehicle;
+
+        colorid++;
+
+        Vehicle vc;
+        vc.VehiclePointCloudPtr = laserCloudNgAftEe_vehicle;
+        vc.calcCenterAndElongation();
+        detectedLocalVehicles.push_back(vc);
+    }
+
+    observedVehicles.clear();
+    vVehicles.clear();
+
+    for (size_t i = 0; i < detectedLocalVehicles.size (); i++)
+    {
+        detectedLocalVehicles[i].id = vVehicles.size();
+        for(set<unsigned>::iterator it = observedVehicles.begin(); it != observedVehicles.end(); it++)
+        {
+            detectedLocalVehicles[i].neighborVehicles[*it] = 1;
+            vVehicles[*it].neighborVehicles[detectedLocalVehicles[i].id] = 1;
+        }
+        observedVehicles.insert(detectedLocalVehicles[i].id);
+        vVehicles.push_back(detectedLocalVehicles[i]);
+    }
+
+    std::cout<<"vVehicles.size() "<<vVehicles.size()<<std::endl;
+    maps->vVehicles = vVehicles;
+
+    //聚类
+    std::vector<pcl::PointIndices> cluster_indices_nature;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
+    ec_nature.setClusterTolerance (0.21);
+    ec_nature.setMinClusterSize (20);
+    ec_nature.setMaxClusterSize (500);
+    ec_nature.setSearchMethod (tree);
+    ec_nature.setInputCloud (map_cylinder_points);
+    ec_nature.extract (cluster_indices_nature);
+
+    colorid = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_nature.begin (); it != cluster_indices_nature.end (); ++it)
+    {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_nature(new pcl::PointCloud<pcl::PointXYZI>());
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+        {
+            map_cylinder_points->points[*pit].intensity = colorid;
+            laserCloudNgAftEe_nature->points.push_back (map_cylinder_points->points[*pit]);
+        }
+        pca.setInputCloud(laserCloudNgAftEe_nature);
+        Eigen::VectorXf eigenVal = pca.getEigenValues();
+
+        if (eigenVal[1] / eigenVal[0] > 0.135)
+            continue;
+
+        mapToShow += *laserCloudNgAftEe_nature;
+        colorid++;
+
+        Pole vc;
+        vc.PolePointCloudPtr = laserCloudNgAftEe_nature;
+        vc.calcCenterAndElongation();
+        detectedLocalPoles.push_back(vc);
+    }
+
+    observedPoles.clear();
+    vPoles.clear();
+
+    for (size_t i = 0; i < detectedLocalPoles.size (); i++)
+    {
+        detectedLocalPoles[i].id = vPoles.size();
+
+        // Update co-visibility graph
+        for(set<unsigned>::iterator it = observedPoles.begin(); it != observedPoles.end(); it++)
+        {
+            detectedLocalPoles[i].neighborPoles[*it] = 1;
+            vPoles[*it].neighborPoles[detectedLocalPoles[i].id] = 1;
+        }
+        observedPoles.insert(detectedLocalPoles[i].id);
+        vPoles.push_back(detectedLocalPoles[i]);
+    }
+
+    std::cout<<"vPoles.size() "<<vPoles.size()<<std::endl;
+    maps->vPoles = vPoles;
+
+//    pcl::VoxelGrid<pcl::PointXYZI> gridMap;
+//    gridMap.setLeafSize(0.8,0.8,0.8);
+//    gridMap.setInputCloud(map_structure_points);
+//    gridMap.filter(*map_structure_points);
+
+    //聚类
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
+    ec.setClusterTolerance (0.60);
+    ec.setMinClusterSize (60);
+    ec.setMaxClusterSize (150000);
+    ec.setSearchMethod (tree);
+    ec.setInputCloud (map_structure_points);
+    ec.extract (cluster_indices);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe(new pcl::PointCloud<pcl::PointXYZI>());
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+    {
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+        {
+            laserCloudNgAftEe->points.push_back (map_structure_points->points[*pit]);
+        }
+    }
+
+    //区域增长法提取激光点云中的平面
+    pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+    pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> normal_estimator;
+    normal_estimator.setSearchMethod (tree);
+    normal_estimator.setInputCloud (laserCloudNgAftEe);
+    normal_estimator.setKSearch (10);
+    normal_estimator.compute (*normals);
+
+    pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
+    reg.setMinClusterSize (60);
+    reg.setMaxClusterSize (1000000);
+    reg.setSearchMethod (tree);
+    reg.setNumberOfNeighbours (20);
+    reg.setInputCloud (laserCloudNgAftEe);
+    reg.setInputNormals (normals);
+    reg.setSmoothnessThreshold (9.0 / 180.0 * M_PI);
+    reg.setCurvatureThreshold (7.0);
+
+    std::vector <pcl::PointIndices> clusters;
+    reg.extract (clusters);
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftReg(new pcl::PointCloud<pcl::PointXYZI>());
+    //创建一个模型参数对象，用于记录结果
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    //inliers表示误差能容忍的点 记录的是点云的序号
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    // 创建一个分割器
+    pcl::SACSegmentation<pcl::PointXYZI> seg;
+    // Optional，这个设置可以选定结果平面展示的点是分割掉的点还是分割剩下的点。
+    seg.setOptimizeCoefficients(true);
+    // Mandatory-设置目标几何形状areSameVehicle
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    //分割方法：随机采样法
+    seg.setMethodType(pcl::SAC_RANSAC);
+    //设置误差容忍范围，也就是我说过的阈值
+    seg.setDistanceThreshold(0.075);
+
+    colorid = 0;
+    for (size_t i = 0 ; i < clusters.size() ; ++i)
+    {
+        Plane plane;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr pointsOnPlane(new pcl::PointCloud<pcl::PointXYZI>());
+        pointsOnPlane->points.clear();
+
+        for (size_t j = 0 ; j < clusters[i].indices.size() ; ++j)
+        {
+            pcl::PointXYZI tmpPoint;
+            tmpPoint.x = laserCloudNgAftEe->points[clusters[i].indices[j]].x;
+            tmpPoint.y = laserCloudNgAftEe->points[clusters[i].indices[j]].y;
+            tmpPoint.z = laserCloudNgAftEe->points[clusters[i].indices[j]].z;
+            tmpPoint.intensity = i;
+            pointsOnPlane->points.push_back(tmpPoint);
+            laserCloudNgAftReg->points.push_back(tmpPoint);
+        }
+
+        //输入点云
+        seg.setInputCloud(pointsOnPlane);
+        //分割点云，获得平面和法向量
+        seg.segment(*inliers, *coefficients);
+
+        double planen[4];
+
+
+        planen[0] = coefficients->values[0];
+        planen[1] = coefficients->values[1];
+        planen[2] = coefficients->values[2];
+        planen[3] = -1.0 * coefficients->values[3];
+
+//        std::cout<<"planen[0] "<<planen[0]<<" planen[1] "<<planen[1]<<" planen[2] "<<planen[2]<<" planen[3] "<<planen[3]<<std::endl;
+//        std::cout<<planen[0]*planen[0]+planen[1]*planen[1]+planen[2]*planen[2]<<std::endl;
+
+        plane.v3normal = Vector3f(planen[0], planen[1], planen[2]);
+        plane.d = planen[3];
+        pcl::copyPointCloud(*pointsOnPlane, *plane.planePointCloudPtr);
+
+        float colors[3] = {0.1,0.5,0.85};
+
+        pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudInlier(new pcl::PointCloud<pcl::PointXYZI>());
+
+        for (std::vector<int>::const_iterator pit = inliers->indices.begin (); pit != inliers->indices.end (); ++pit)
+        {
+            pointsOnPlane->points[*pit].intensity = colorid;
+            laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
+        }
+
+        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
+
+        colorid++;
+
+
+        plane.calcConvexHull(plane.planePointCloudPtr,planen);
+
+        // plane.forcePtsLayOnPlane();
+
+        plane.computeMassCenterAndArea();
+        plane.calcElongationAndPpalDir();
+
+        plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
+
+        mapToShow += *plane.planePointCloudPtr;
+
+        detectedLocalPlanes.push_back(plane);
+    }
+
+    observedPlanes.clear();
+    vPlanes.clear();
+    for (size_t i = 0; i < detectedLocalPlanes.size (); i++)
+    {
+        detectedLocalPlanes[i].id = vPlanes.size();
+        for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
+        {
+            detectedLocalPlanes[i].neighborPlanes[*it] = 1;
+            vPlanes[*it].neighborPlanes[detectedLocalPlanes[i].id] = 1;
+        }
+        observedPlanes.insert(detectedLocalPlanes[i].id);
+        vPlanes.push_back(detectedLocalPlanes[i]);
+    }
+
+    std::cout<<"vPlanes.size() "<<vPlanes.size()<<std::endl;
+
+    maps->vPlanes = vPlanes;
+
     LiPMatch_hd = createThreadFromObjectMethod(this,&LiPMatch::run);
 
     keyframe_vec.clear();
 
-    all_kfs_pose.points.clear();
-
     map_rfn.set_down_sample_resolution( 0.75 );
+
+//    laserCloudOri_m1 += *laserCloudNgAftEe;
+    laserCloudOri_m1 += mapToShow;
+
+//    laserCloudOri_m1 += *map_structure_points;
+
+    pcl::VoxelGrid<pcl::PointXYZI> downSizeFilterTargetMap;
+    downSizeFilterTargetMap.setLeafSize(0.50,0.50,0.50);
+    downSizeFilterTargetMap.setInputCloud(laserCloudOri_m1.makeShared());
+    downSizeFilterTargetMap.filter(laserCloudOri_m1);
+
 }
+
+
+//自定义排序函数  
+static bool sortFun(const std::map<unsigned, unsigned> &p1, const std::map<unsigned, unsigned> &p2)
+{
+    return p1.size() > p2.size(); //升序排列  
+}
+
 
 
 
 void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 {
-//    static std::ofstream unarycout("/home/jjwen/u.txt");
-//    static std::ofstream binarycout("/home/jjwen/b.txt");
-
+    std::cout<<"new keyframe coming..."<<std::endl;
     static pcl::VoxelGrid<pcl::PointXYZI> grid_1;
-    grid_1.setLeafSize(0.35,0.35,0.35);
-//    grid_1.setInputCloud(c_keyframe.orilaserCloud);
-//    grid_1.filter (*c_keyframe.orilaserCloud);
+    grid_1.setLeafSize(0.40,0.40,0.40);
 
     grid_1.setInputCloud(c_keyframe.structurelaserCloud);
     grid_1.filter (*c_keyframe.structurelaserCloud);
 
+    grid_1.setLeafSize(0.20,0.20,0.20);
     grid_1.setInputCloud(c_keyframe.vehiclelaserCloud);
     grid_1.filter (*c_keyframe.vehiclelaserCloud);
 
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor;
+    sor.setInputCloud(c_keyframe.vehiclelaserCloud);
+    sor.setMeanK(10);   //设置在进行统计时考虑查询点邻近点数
+    sor.setStddevMulThresh(0.5);
+    sor.setNegative(false);
+    sor.filter(*c_keyframe.vehiclelaserCloud);
+
+    grid_1.setLeafSize(0.20,0.20,0.20);
     grid_1.setInputCloud(c_keyframe.naturelaserCloud);
     grid_1.filter (*c_keyframe.naturelaserCloud);
 
-    grid_1.setInputCloud(c_keyframe.objectlaserCloud);
-    grid_1.filter (*c_keyframe.objectlaserCloud);
-
-    static pcl::VoxelGrid<pcl::PointXYZI> grid_2;
-    grid_2.setLeafSize(0.8,0.8,0.8);
-    grid_2.setInputCloud(c_keyframe.surflaserCloud);
-    grid_2.filter (*c_keyframe.surflaserCloud);
-
-    static pcl::VoxelGrid<pcl::PointXYZI> grid_3;
-    grid_3.setLeafSize(0.4,0.4,0.4);
-    grid_3.setInputCloud(c_keyframe.linelaserCloud);
-    grid_3.filter (*c_keyframe.linelaserCloud);
-
-    grid_3.setInputCloud(c_keyframe.orilaserCloud);
-    grid_3.filter (*c_keyframe.orilaserCloud);
-
-    grid_3.setInputCloud(c_keyframe.g_laserCloud.makeShared());
-    grid_3.filter (c_keyframe.g_laserCloud);
-
     double time_behinSeg = pcl::getTime();
 
-    //////////////////////
+
     int colorid = 0;
     //聚类
     pcl::search::KdTree<pcl::PointXYZI>::Ptr treeVehicle (new pcl::search::KdTree<pcl::PointXYZI>);
     treeVehicle->setInputCloud (c_keyframe.vehiclelaserCloud);
     std::vector<pcl::PointIndices> cluster_indices_vehicle;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_vehicle;
-    ec_vehicle.setClusterTolerance (0.45);
+    ec_vehicle.setClusterTolerance (0.205);
 //    ec.setMinClusterSize (100);
-    ec_vehicle.setMinClusterSize (100);
-    ec_vehicle.setMaxClusterSize (150000);
+    ec_vehicle.setMinClusterSize (75);
+    ec_vehicle.setMaxClusterSize (7500);
     ec_vehicle.setSearchMethod (treeVehicle);
     ec_vehicle.setInputCloud (c_keyframe.vehiclelaserCloud);
     ec_vehicle.extract (cluster_indices_vehicle);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_vehicles(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::PCA< pcl::PointXYZI > pca;
 
     vector<Vehicle> detectedLocalVehicles;
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr vehiclesPointCloud(new pcl::PointCloud<pcl::PointXYZI>);
 
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_vehicle.begin (); it != cluster_indices_vehicle.end (); ++it)
     {
@@ -88,10 +1836,16 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
         pca.setInputCloud(laserCloudNgAftEe_vehicle);
         Eigen::VectorXf eigenVal = pca.getEigenValues();
 
-        if (eigenVal[2] / eigenVal[0] < 0.005)
+//        if (eigenVal[2] / eigenVal[0] < 0.005)
+//            continue;
+
+        if (eigenVal[2] / eigenVal[0] < 0.01)
             continue;
 
-        *laserCloudNgAftEe_vehicles += *laserCloudNgAftEe_vehicle;
+        if (eigenVal[1] / eigenVal[0] < 0.01)
+            continue;
+
+        *vehiclesPointCloud += *laserCloudNgAftEe_vehicle;
 
         colorid++;
 
@@ -99,14 +1853,14 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 
         Vehicle vc;
         vc.VehiclePointCloudPtr = laserCloudNgAftEe_vehicle;
-        vc.keyFrameId = keyFrameCount;
         vc.calcCenterAndElongation();
 
         detectedLocalVehicles.push_back(vc);
 
     }
 
-    laserCloudOri_mp1 += *laserCloudNgAftEe_vehicles;
+    // laserCloudOri_m2 += *vehiclesPointCloud;
+
 
     observedVehicles.clear();
     vVehicles.clear();
@@ -137,14 +1891,13 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     treeNature->setInputCloud (c_keyframe.naturelaserCloud);
     std::vector<pcl::PointIndices> cluster_indices_nature;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
-    ec_nature.setClusterTolerance (0.45);
+    ec_nature.setClusterTolerance (0.21);
 //    ec.setMinClusterSize (100);
-    ec_nature.setMinClusterSize (15);
-    ec_nature.setMaxClusterSize (150000);
+    ec_nature.setMinClusterSize (20);
+    ec_nature.setMaxClusterSize (500);
     ec_nature.setSearchMethod (treeNature);
     ec_nature.setInputCloud (c_keyframe.naturelaserCloud);
     ec_nature.extract (cluster_indices_nature);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr laserCloudNgAftEe_natures(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::PCA< pcl::PointXYZI > pca1;
 
     vector<Pole> detectedLocalPoles;
@@ -161,10 +1914,9 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
         pca1.setInputCloud(laserCloudNgAftEe_nature);
         Eigen::VectorXf eigenVal = pca1.getEigenValues();
 
-        if (eigenVal[1] / eigenVal[0] > 0.17)
+        if (eigenVal[1] / eigenVal[0] > 0.135)
             continue;
 
-        *laserCloudNgAftEe_natures += *laserCloudNgAftEe_nature;
         colorid++;
 
         Pole vc;
@@ -174,11 +1926,7 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 
         detectedLocalPoles.push_back(vc);
 
-//        std::cout<<eigenVal[0]<<" "<<eigenVal[1]<<" "<<eigenVal[2]<<std::endl;
-
     }
-
-//    laserCloudOri_mp1 += *laserCloudNgAftEe_natures;
 
     observedPoles.clear();
     vPoles.clear();
@@ -202,26 +1950,16 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     mk->vPoles = vPoles;
 
 
-    static pcl::VoxelGrid<pcl::PointXYZI> grid_t;
-    grid_t.setLeafSize(0.6,0.6,0.6);
-
-    grid_t.setInputCloud(laserCloudOri_mp1.makeShared());
-    grid_t.filter (laserCloudOri_mp1);
-
-
-
     /////////////////////
-
-
 
     //聚类
     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZI>);
     tree->setInputCloud (c_keyframe.structurelaserCloud);
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
-    ec.setClusterTolerance (0.8);
+    ec.setClusterTolerance (0.65);
 //    ec.setMinClusterSize (100);
-    ec.setMinClusterSize (200);
+    ec.setMinClusterSize (70);
     ec.setMaxClusterSize (150000);
     ec.setSearchMethod (tree);
     ec.setInputCloud (c_keyframe.structurelaserCloud);
@@ -248,15 +1986,15 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     normal_estimator.compute (*normals);
 
     pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
-//    reg.setMinClusterSize (100);
-    reg.setMinClusterSize (100);
+    reg.setMinClusterSize (70);
+//    reg.setMinClusterSize (120);
     reg.setMaxClusterSize (1000000);
     reg.setSearchMethod (treeRg);
     reg.setNumberOfNeighbours (20);
     reg.setInputCloud (laserCloudNgAftEe);
     reg.setInputNormals (normals);
-    reg.setSmoothnessThreshold (14.0 / 180.0 * M_PI);
-    reg.setCurvatureThreshold (10.0);
+    reg.setSmoothnessThreshold (9.0 / 180.0 * M_PI);
+    reg.setCurvatureThreshold (7.0);
 
     std::vector <pcl::PointIndices> clusters;
     reg.extract (clusters);
@@ -270,12 +2008,12 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     pcl::SACSegmentation<pcl::PointXYZI> seg;
     // Optional，这个设置可以选定结果平面展示的点是分割掉的点还是分割剩下的点。
     seg.setOptimizeCoefficients(true);
-    // Mandatory-设置目标几何形状
+    // Mandatory-设置目标几何形状areSameVehicle
     seg.setModelType(pcl::SACMODEL_PLANE);
     //分割方法：随机采样法
     seg.setMethodType(pcl::SAC_RANSAC);
     //设置误差容忍范围，也就是我说过的阈值
-    seg.setDistanceThreshold(0.01);
+    seg.setDistanceThreshold(0.075);
 
     vector<Plane> detectedLocalPlanes;
 
@@ -297,12 +2035,14 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
             pointsOnPlane->points.push_back(tmpPoint);
             laserCloudNgAftReg->points.push_back(tmpPoint);
         }
+
         //输入点云
         seg.setInputCloud(pointsOnPlane);
         //分割点云，获得平面和法向量
         seg.segment(*inliers, *coefficients);
 
         double planen[4];
+
         planen[0] = coefficients->values[0];
         planen[1] = coefficients->values[1];
         planen[2] = coefficients->values[2];
@@ -324,19 +2064,21 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 
         plane.calcConvexHull(plane.planePointCloudPtr,planen);
 
-        plane.computeMassCenterAndArea();
-        plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
+        // plane.forcePtsLayOnPlane();
 
-        plane.keyFrameId = keyFrameCount;
+
+        plane.computeMassCenterAndArea();
+        plane.calcElongationAndPpalDir();
+
+        plane.areaVoxels= plane.planePointCloudPtr->size() * 0.0025;
 
         *curPlanePoints += *plane.planePointCloudPtr;
 
         detectedLocalPlanes.push_back(plane);
     }
 
-//    laserCloudOri_mp1 += *curPlanePoints;
-
-    std::cout<<"detectedLocalPlanes.size() "<<detectedLocalPlanes.size ()<<std::endl;
+//    laserCloudOri_m2.points.clear();
+//    laserCloudOri_m2 += *curPlanePoints;
 
     // Merge detected planes with previous ones if they are the same
     observedPlanes.clear();
@@ -356,542 +2098,585 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
         vPlanes.push_back(detectedLocalPlanes[i]);
     }
 
-    for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
-    {
-        Plane &observedPlane = vPlanes[*it];
-        observedPlane.calcElongationAndPpalDir();
-    }
-
-
-    double time_endinSeg = pcl::getTime();
-
-    std::cout<<"plane seg time: "<<time_endinSeg-time_behinSeg<<std::endl;
-
-//    std::shared_ptr<Maps_keyframe<float>> mk = std::make_shared<Maps_keyframe<float>>();
-
     std::cout<<"vPlanes.size() ";
     std::cout<<vPlanes.size()<<std::endl;
 
     mk->vPlanes = vPlanes;
-    mk->m_accumulated_point_cloud = *c_keyframe.orilaserCloud;
 
-    mk->m_accumulated_ng_pc = c_keyframe.g_laserCloud;
+//    std::cout<<"mk->m_accumulated_g_pc.size() "<<mk->m_accumulated_g_pc.size()<<std::endl;
 
-    mk->m_keyframe_idx = keyFrameCount;
-    mk->m_ending_frame_idx = c_keyframe.m_ending_frame_idx;
-    mk->m_accumulate_frames = c_keyframe.framecount;
-    mk->m_pose_q = c_keyframe.m_pose_q;
-    mk->m_pose_t = c_keyframe.m_pose_t;
-    mk->m_accumulated_line_pc = *c_keyframe.linelaserCloud;
-    mk->m_accumulated_surf_pc = *c_keyframe.surflaserCloud;
-//    mk->m_accumulated_g_pc = c_keyframe.g_laserCloud;
+    mk->m_accumulated_structure_pc = *c_keyframe.structurelaserCloud;
+    mk->m_accumulated_vehicle_pc = *c_keyframe.vehiclelaserCloud;
 
-    ////////////////
-
-    Eigen::Quaterniond                                 q_curr;
-    Eigen::Vector3d                                    t_curr;
-
-    q_curr = c_keyframe.m_pose_q;
-    t_curr = c_keyframe.m_pose_t;
 
     keyframe_vec.push_back( mk );
 
-
-    map_id_pc.insert( std::make_pair( map_id_pc.size(), keyframe_vec.back()->m_accumulated_point_cloud ) );
-
-
-    int curren_frame_idx = keyframe_vec.back()->m_ending_frame_idx;
-
-    pose3d_vec.push_back( Pose3d( q_curr, t_curr ) );
-    pose3d_map.insert( std::make_pair( pose3d_map.size(), Pose3d( q_curr, t_curr ) ) );
-
-    if ( pose3d_vec.size() >= 2 )
-    {
-        Constraint3d temp_csn;
-        Eigen::Vector3d relative_T = pose3d_vec[ pose3d_vec.size() - 2 ].q.inverse() * ( t_curr - pose3d_vec[ pose3d_vec.size() - 2 ].p );
-        Eigen::Quaterniond relative_Q = pose3d_vec[ pose3d_vec.size() - 2 ].q.inverse() * q_curr;
-        temp_csn = Constraint3d( pose3d_vec.size() - 2, pose3d_vec.size() - 1,relative_Q, relative_T );
-        constrain_vec.push_back( temp_csn );
-    }
-
     std::shared_ptr<Maps_keyframe<float>>& last_keyframe = keyframe_vec.back();
 
-    printf( "--- Current_idx = %d, lidar_frame_idx = %d ---\r\n", keyframe_vec.size(), curren_frame_idx );
-
     std::map<unsigned, unsigned> bestMatch; bestMatch.clear();
-    int this_kf = 0;
 
-    float wdif_height;
-    float wdif_height2;
-    float wdif_normal;
-    float wrel_dist_centers;
-    float wal;
-    float wea;
+    Subgraph currentSubgraph1(maps->vPlanes, 0);
+    Subgraph targetSubgraph1(last_keyframe->vPlanes, 0);
 
+    int unaycount;
+    std::map<unsigned, unsigned> resultingMatch = matcher.compareSubgraphs(currentSubgraph1, targetSubgraph1,
+                                                                           unaycount);
 
-    pcl::PointXYZI pointSel;
-    pointSel.x = t_curr(0);
-    pointSel.y = t_curr(1);
-    pointSel.z = t_curr(2);
-
-    if (all_kfs_pose.points.size() < 10) {
-        all_kfs_pose.push_back(pointSel);
-        return;
-    }
-
-    m_kdtree_kfs.setInputCloud( all_kfs_pose.makeShared() );
-    std::vector<int> pointSearchInd;
-    std::vector<float> pointSearchSqDis;
-    m_kdtree_kfs.nearestKSearch(pointSel, 10, pointSearchInd, pointSearchSqDis);
-    all_kfs_pose.push_back(pointSel);
-
-    bestMatch.clear();
-    this_kf = 0;
-
-    double aveTime = 0.0;
-    int graphmatchTimes = 0;
-    if (last_keyframe->vPlanes.size() > 2) {
-
-        for (size_t his = 0; his < pointSearchInd.size(); his++) {
-            if ((keyframe_vec.size() - pointSearchInd[his]) <= 10) {
-                continue;
-            }
-
-            if (keyframe_vec[pointSearchInd[his]]->vPlanes.size() < 3)
-                continue;
-
-            Subgraph currentSubgraph(keyframe_vec[pointSearchInd[his]]->vPlanes, 0);
-            Subgraph targetSubgraph(last_keyframe->vPlanes, 0);
-
-            int unaycount;
-            double time_begComp = pcl::getTime();
-            std::map<unsigned, unsigned> resultingMatch = matcher.compareSubgraphs(currentSubgraph, targetSubgraph,
-                                                                                   unaycount);
-
-            graphmatchTimes++;
-
-            double time_endComp = pcl::getTime();
-
-            aveTime += time_endComp - time_begComp;
-
-            if (resultingMatch.size() > bestMatch.size()) {
-                bestMatch = resultingMatch;
-                this_kf = pointSearchInd[his];
-
-                wdif_height = matcher.wdif_height;
-                wdif_height2 = matcher.wdif_height2;
-                wdif_normal = matcher.wdif_normal;
-                wrel_dist_centers = matcher.wrel_dist_centers;
-                wal = matcher.wal;
-                wea = matcher.wea;
-            }
-        }
-    }
-
-//    std::cout<<"!!!!!!!!!"<<std::endl;
-//    std::cout<<"wdif_height "<<wdif_height<<std::endl;
-//    std::cout<<"wdif_height2 "<<wdif_height2<<std::endl;
-//    std::cout<<"wdif_normal "<<wdif_normal<<std::endl;
-//    std::cout<<"wrel_dist_centers "<<wrel_dist_centers<<std::endl;
-//    std::cout<<"!!!!!!!!!"<<std::endl;
-
-
-    std::cout<<"comp time "<<aveTime/graphmatchTimes<<std::endl;
-
-    std::vector<Eigen::Vector3f> kvc;
-    std::vector<Eigen::Vector3f> lvc;
-    std::vector<Eigen::Vector3f> kvn;
-    std::vector<Eigen::Vector3f> lvn;
-
-    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
-    {
-        kvc.push_back(keyframe_vec[this_kf]->vPlanes[it->first].v3center);
-        lvc.push_back(last_keyframe->vPlanes[it->second].v3center);
-        kvn.push_back(keyframe_vec[this_kf]->vPlanes[it->first].v3normal);
-        lvn.push_back(last_keyframe->vPlanes[it->second].v3normal);
-    }
-
-    std::map<unsigned, unsigned> bestMatchVehicle; bestMatchVehicle.clear();
-    int this_kf_vehicle = 0;
-
-    if (last_keyframe->vVehicles.size() > 2) {
-
-        for (size_t his = 0; his < pointSearchInd.size(); his++) {
-            if ((keyframe_vec.size() - pointSearchInd[his]) <= 10) {
-                continue;
-            }
-
-            if (keyframe_vec[pointSearchInd[his]]->vVehicles.size() < 3)
-                continue;
-
-            Subgraph currentSubgraph(keyframe_vec[pointSearchInd[his]]->vVehicles, 0);
-            Subgraph targetSubgraph(last_keyframe->vVehicles, 0);
-
-            int unaycount;
-            std::map<unsigned, unsigned> resultingMatch = matcher.compareSubgraphsVehiclePlaneRef(currentSubgraph, targetSubgraph, unaycount, kvc,
-                                                                                                  lvc, kvn, lvn);
-
-            if (resultingMatch.size() > bestMatchVehicle.size()) {
-                bestMatchVehicle = resultingMatch;
-                this_kf_vehicle = pointSearchInd[his];
-            }
-        }
-    }
-
-
-    std::map<unsigned, unsigned> bestMatchPole; bestMatchPole.clear();
-    int this_kf_pole = 0;
-
-    if (last_keyframe->vPoles.size() > 2) {
-
-        for (size_t his = 0; his < pointSearchInd.size(); his++) {
-            if ((keyframe_vec.size() - pointSearchInd[his]) <= 10) {
-                continue;
-            }
-
-            if (keyframe_vec[pointSearchInd[his]]->vPoles.size() < 3)
-                continue;
-
-            Subgraph currentSubgraph(keyframe_vec[pointSearchInd[his]]->vPoles, 0);
-            Subgraph targetSubgraph(last_keyframe->vPoles, 0);
-
-            int unaycount;
-            std::map<unsigned, unsigned> resultingMatch = matcher.compareSubgraphsPolePlaneRef(currentSubgraph, targetSubgraph, unaycount, kvc,
-                                                                                                  lvc, kvn, lvn);
-
-            if (resultingMatch.size() > bestMatchPole.size()) {
-                bestMatchPole = resultingMatch;
-                this_kf_pole = pointSearchInd[his];
-            }
-        }
-    }
-
-
-    std::cout<<"+++++++++++++++++++++++++++++++"<<std::endl;
-    std::cout<<"this_kf "<<this_kf<<std::endl;
-    std::cout<<"this_kf_pole "<<this_kf_pole<<std::endl;
-    std::cout<<"this_kf_vehicle "<<this_kf_vehicle<<std::endl;
-    std::cout<<"=================="<<std::endl;
-    std::cout<<"bestMatch.size() "<<bestMatch.size()<<std::endl;
-    std::cout<<"bestMatchPole.size() "<<bestMatchPole.size()<<std::endl;
-    std::cout<<"bestMatchVehicle.size() "<<bestMatchVehicle.size()<<std::endl;
-    std::cout<<"-----------------------------"<<std::endl;
-
-    if (bestMatch.size() < 3)
+    if (matcher.allMatchGroups.size() < 1)
         return;
 
-    int allMatchedSize = bestMatch.size();
+    std::cout << "matcher.allMatchGroups.size() " << matcher.allMatchGroups.size() << std::endl;
 
-    if (bestMatchVehicle.size() > 1 && abs(this_kf - this_kf_vehicle) < 2)
+    int allMatchedSize;
+
+    int greatMatchedSize = 0;
+    std::map<unsigned, unsigned> greatestMatch;
+    std::map<unsigned, unsigned> allgreatestMatch;
+
+//    laserCloudOri_m2.points.clear();
+//    laserCloudOri_m2.width = 0;
+//    laserCloudOri_m2.height = 0;
+    
+    //KITTI
+    std::map<unsigned, unsigned> bestMatchVehicle;
+    bestMatchVehicle.clear();
+
+    std::map<unsigned, unsigned> bestMatchPole;
+    bestMatchPole.clear();
+
+    std::vector<std::map<unsigned, unsigned> > AllSamebestMatch; AllSamebestMatch.clear();
+    std::vector<int> AllSamebestMatchSize; AllSamebestMatchSize.clear();
+
+    /******************/
+
+    // std::cout<<"vVehicles.size() "<<vVehicles.size()<<std::endl;
+
+    // if ()
+
+
+    laserCloudOri_m2.points.clear();
+    laserCloudOri_m2.width = 0;
+    laserCloudOri_m2.height = 0;
+
+    if (last_keyframe->vVehicles.size() > 6)
     {
+        Subgraph currentSubgraphv(maps->vVehicles, 0);
+        Subgraph targetSubgraphv(last_keyframe->vVehicles, 0);
+
+        std::cout<<"begin compareSubgraphsVehicleWithoutPlaneRef"<<std::endl;
+        int tunaycount;
+        std::map<unsigned, unsigned> resultingMatchtvt = matcher.compareSubgraphsVehicleWithoutPlaneRef(currentSubgraphv, targetSubgraphv, tunaycount);
+        std::cout<<"resultingMatchtvt.size() "<<resultingMatchtvt.size()<<std::endl;
+
+        if (resultingMatchtvt.size() >= 7)
+        {
+            for (map<unsigned, unsigned>::iterator it = resultingMatchtvt.begin(); it != resultingMatchtvt.end(); it++)
+            {
+                laserCloudOri_m2 += *maps->vVehicles[it->first].VehiclePointCloudPtr;
+                laserCloudOri_m2 += *last_keyframe->vVehicles[it->second].VehiclePointCloudPtr;
+            }
+
+            std::cout<<"localization successful !"<<std::endl;
+            return;
+        }
+    }
+
+
+    if (last_keyframe->vPoles.size() > 6)
+    {
+        Subgraph currentSubgraphcy(maps->vPoles, 0);
+        Subgraph targetSubgraphcy(last_keyframe->vPoles, 0);
+        
+        std::cout<<"begin compareSubgraphsPoleWithoutPlaneRef"<<std::endl;
+        int tunaycountc;
+        std::map<unsigned, unsigned> resultingMatchtvtc = matcher.compareSubgraphsPoleWithoutPlaneRef(currentSubgraphcy, targetSubgraphcy, tunaycountc);
+        std::cout<<"resultingMatchtvtc.size() "<<resultingMatchtvtc.size()<<std::endl;
+        
+        if (resultingMatchtvtc.size() >= 7)
+        {
+            for (map<unsigned, unsigned>::iterator it = resultingMatchtvtc.begin(); it != resultingMatchtvtc.end(); it++)
+            {
+                laserCloudOri_m2 += *maps->vPoles[it->first].PolePointCloudPtr;
+                laserCloudOri_m2 += *last_keyframe->vPoles[it->second].PolePointCloudPtr;
+            }
+            std::cout<<"localization successful !"<<std::endl;
+            return;
+        }
+    }
+
+    /******************/
+    // for (size_t i = 0 ; i < matcher.allMatchGroups.size() ; ++i)
+    // {
+    //     std::cout<<matcher.allMatchGroups[i].size()<<std::endl;
+    // }
+
+    // std::cout<<"======================"<<std::endl;
+	
+    sort(matcher.allMatchGroups.begin(), matcher.allMatchGroups.end(), sortFun);
+    
+    // for (size_t i = 0 ; i < matcher.allMatchGroups.size() ; ++i)
+    // {
+    //     std::cout<<matcher.allMatchGroups[i].size()<<std::endl;
+    // }
+
+    int maxSize = matcher.allMatchGroups[0].size();
+
+    for (size_t i = 0 ; i < matcher.allMatchGroups.size() ; ++i)
+    {
+        if (matcher.allMatchGroups[i].size() < (maxSize-1) )
+            break;
+
+        bestMatch = matcher.allMatchGroups[i];
+
+        if (bestMatch.size() < 3)
+            continue;
+
+        bestMatchVehicle.clear();
+        bestMatchPole.clear();
+
+        if (last_keyframe->vVehicles.size() > 0)
+        {
+            std::vector <Eigen::Vector3f> kvc;
+            std::vector <Eigen::Vector3f> lvc;
+            std::vector <Eigen::Vector3f> kvn;
+            std::vector <Eigen::Vector3f> lvn;
+            
+            for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+                kvc.push_back(maps->vPlanes[it->first].v3center);
+                lvc.push_back(last_keyframe->vPlanes[it->second].v3center);
+                kvn.push_back(maps->vPlanes[it->first].v3normal);
+                lvn.push_back(last_keyframe->vPlanes[it->second].v3normal);
+            }
+            
+            Subgraph currentSubgraph2(maps->vVehicles, 0);
+            Subgraph targetSubgraph2(last_keyframe->vVehicles, 0);
+            
+            unaycount = 0;
+            std::map<unsigned, unsigned> resultingMatch1 = matcher.compareSubgraphsVehiclePlaneRef(currentSubgraph2,
+                                                                                                   targetSubgraph2,
+                                                                                                   unaycount, kvc,
+                                                                                                   lvc, kvn, lvn);
+                                                                                                   
+            std::vector <Eigen::Vector3f> vkvc;
+            std::vector <Eigen::Vector3f> vlvc;
+
+            for (map<unsigned, unsigned>::iterator it = resultingMatch1.begin(); it != resultingMatch1.end(); it++) {
+                vkvc.push_back(maps->vVehicles[it->first].v3center);
+                vlvc.push_back(last_keyframe->vVehicles[it->second].v3center);}
+                
+            bestMatchVehicle = resultingMatch1;
+
+            if (last_keyframe->vPoles.size() > 0)
+            {
+                Subgraph currentSubgraph3(maps->vPoles, 0);
+                Subgraph targetSubgraph3(last_keyframe->vPoles, 0);
+
+                matcher.v_kvc = vkvc;
+                matcher.v_lvc = vlvc;
+
+                unaycount = 0;
+                std::map<unsigned, unsigned> resultingMatch2 = matcher.compareSubgraphsPolePlaneRef(currentSubgraph3,
+                                                                                            targetSubgraph3, unaycount,
+                                                                                            kvc,
+                                                                                            lvc, kvn, lvn);
+                bestMatchPole = resultingMatch2;
+            }
+        }
+
+
+//        std::cout << "bestMatchPole.size() " << bestMatchPole.size() << std::endl;
+//        std::cout << "bestMatchVehicle.size() " << bestMatchVehicle.size() << std::endl;
+
+//    laserCloudOri_m2.height = 1;
+//    laserCloudOri_m2.width = vehiclesPointCloud->points.size();
+//    laserCloudOri_m2 = *vehiclesPointCloud;
+
+
+//    laserCloudOri_m2.points.clear();
+//
+//        if (bestMatch.size() > 0)
+//            for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+//                laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//                laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+//            }
+
+//    std::cout<<"matcher.allwinnerMatch.size() "<<matcher.allwinnerMatch.size()<<std::endl;
+//    if (matcher.allwinnerMatch.size() > 0)
+//        for (map<unsigned, unsigned>::iterator it = matcher.allwinnerMatch.begin(); it != matcher.allwinnerMatch.end(); it++)
+//        {
+//            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//
+//            for (size_t k = 0 ; k < last_keyframe->vPlanes[it->second].planePointCloudPtr->points.size() ; ++k)
+//            {
+//                last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z = last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z + 10.0;
+//            }
+//            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+//        }
+
+//    pcl::copyPointCloud(*vehiclesPointCloud,laserCloudOri_m2);
+
+//    laserCloudOri_m2 += *map_cylinder_points;
+//    laserCloudOri_m2 = *map_vehicle_points;
+
+//    laserCloudOri_m2 += *map_structure_points;
+
+//    for (size_t k = 0 ; k < vehiclesPointCloud->points.size() ; ++k)
+//    {
+//        vehiclesPointCloud->points[k].z = vehiclesPointCloud->points[k].z + 10.0;
+//    }
+//
+//    for (size_t k = 0 ; k < curPlanePoints->points.size() ; ++k)
+//    {
+//        curPlanePoints->points[k].z = curPlanePoints->points[k].z + 10.0;
+//    }
+//    laserCloudOri_m2 += *curPlanePoints;
+
+
+//         std::vector<int> firstINdexes;
+//         for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+//             firstINdexes.push_back(it->first);
+//         }
+
+//         pcl::PointCloud <pcl::PointXYZI> normPOints;
+//         for (int it = 0; it < firstINdexes.size(); ++it) {
+//             pcl::PointXYZI phe;
+//             phe.x = maps->vPlanes[firstINdexes[it]].v3normal(0);
+//             phe.y = maps->vPlanes[firstINdexes[it]].v3normal(1);
+//             phe.z = maps->vPlanes[firstINdexes[it]].v3normal(2);
+//             normPOints.points.push_back(phe);
+//         }
+
+//         //聚类
+//         pcl::search::KdTree<pcl::PointXYZI>::Ptr tree1(new pcl::search::KdTree <pcl::PointXYZI>);
+//         tree1->setInputCloud(normPOints.makeShared());
+//         std::vector <pcl::PointIndices> cluster_indices2;
+//         pcl::EuclideanClusterExtraction <pcl::PointXYZI> ec1;
+//         ec1.setClusterTolerance(0.15);
+//         ec1.setMinClusterSize(1);
+//         ec1.setMaxClusterSize(100);
+//         ec1.setSearchMethod(tree1);
+//         ec1.setInputCloud(normPOints.makeShared());
+//         ec1.extract(cluster_indices2);
+
+// //        std::cout << "cluster_indices2.size() " << cluster_indices2.size() << std::endl;
+
+//         if (cluster_indices2.size() < 2) {
+//             continue;
+//         }
+
+//    if (bestMatch.size() < 3)
+//        return;
+
+        allMatchedSize = bestMatch.size();
+
         allMatchedSize += bestMatchVehicle.size();
-    }
 
-
-    if (bestMatchPole.size() > 1 && abs(this_kf - this_kf_pole) < 2)
-    {
         allMatchedSize += bestMatchPole.size();
-    }
+
+//    if (bestMatchVehicle.size() > 1)
+//    {
+//        allMatchedSize += bestMatchVehicle.size();
+//    }
+//    if (bestMatchPole.size() > 1)
+//    {
+//        allMatchedSize += bestMatchPole.size();
+//    }
 
 
 //    std::cout<<"comp time "<<aveTime/(pointSearchInd.size())<<std::endl;
 
+    //    std::cout << "allMatchedSize " << allMatchedSize << std::endl;
+
+    //    std::cout << "matcher.allMatchGroups_height[i] " << matcher.allMatchGroups_height[i] << std::endl;
+    //    std::cout << "matcher.allMatchGroups_normal[i] " << matcher.allMatchGroups_normal[i] << std::endl;
+    //    std::cout << "matcher.allMatchGroups_dist_centers[i] " << matcher.allMatchGroups_dist_centers[i] << std::endl;
+
+    //    if (allMatchedSize > 5) {
+
+    //        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+    //        {
+    //            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+               
+    //            pcl::PointCloud<pcl::PointXYZI>::Ptr tempz(new pcl::PointCloud<pcl::PointXYZI>());
+    //            *tempz = *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+    //            for (size_t k = 0 ; k < tempz->points.size() ; ++k)
+    //            {
+    //                tempz->points[k].z = tempz->points[k].z + 10.0;
+    //            }
+    //            laserCloudOri_m2 += *tempz;
+    //        }
+
+    //     //    std::cout << "matcher.allMatchGroups_height[i] " << matcher.allMatchGroups_height[i] << std::endl;
+    //     //    std::cout << "matcher.allMatchGroups_normal[i] " << matcher.allMatchGroups_normal[i] << std::endl;
+    //     //    std::cout << "matcher.allMatchGroups_dist_centers[i] " << matcher.allMatchGroups_dist_centers[i] << std::endl;
+
+    //     //    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+    //     //    {
+    //     //        std::cout<<it->first<<"      "<<it->second<<std::endl;
+    //     //    }
+
+    //         for (auto itm : bestMatch)
+    //         {
+    //             allgreatestMatch.insert(itm);
+    //         }
+
+    //    }
+
+        // std::cout<<greatMatchedSize<<std::endl;
+        if (allMatchedSize >= greatMatchedSize)
+        {
+            greatMatchedSize = allMatchedSize;
+            greatestMatch = bestMatch;
+
+        }
+
+        AllSamebestMatch.push_back(bestMatch);
+        AllSamebestMatchSize.push_back(allMatchedSize);
+
+    }
+
+    allMatchedSize = greatMatchedSize;
+    bestMatch = greatestMatch;
+
+    // std::cout<<"allMatchedSize "<<allMatchedSize<<std::endl;
+    // std::cout<<"bestMatch.size() "<<bestMatch.size()<<std::endl;
+
+    // bestMatch.clear();
+    // for (size_t i = 0 ; i < AllSamebestMatchSize.size() ; ++i)
+    // {
+    //     if (AllSamebestMatchSize[i] == greatMatchedSize)
+    //     {
+    //         for (auto item : AllSamebestMatch[i])
+    //         {
+    //             bestMatch.insert(item);
+    //         }
+    //     }
+    // }
+
+    // allMatchedSize = greatMatchedSize;
+
     std::cout<<"allMatchedSize "<<allMatchedSize<<std::endl;
+    std::cout<<"bestMatch.size() "<<bestMatch.size()<<std::endl;
 
-//    if (allMatchedSize < 6) {
-//
-//        if (allMatchedSize < 3)
-//            return;
-//
-//        float minarea = 0.0;
-//        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
-//            minarea += last_keyframe->vPlanes[it->second].areaHull;
-//
-//        float minarea2 = 0.0;
-//        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
-//            minarea2 += keyframe_vec[this_kf]->vPlanes[it->first].areaHull;
-//
-//        std::cout<<"minarea/minarea2 "<<minarea/minarea2<<std::endl;
+
+
+
+
+//    laserCloudOri_m2 += *map_structure_points;
+
+
+
+//    if (bestMatch.size() < 1)
+//        return;
 //
 //
+//    std::vector<Eigen::Vector3f> kvc;
+//    std::vector<Eigen::Vector3f> lvc;
+//    std::vector<Eigen::Vector3f> kvn;
+//    std::vector<Eigen::Vector3f> lvn;
 //
-//        float areaG = 0.0;
-//        for (size_t his = 0; his < last_keyframe->vPlanes.size(); ++his) {
-//            areaG += last_keyframe->vPlanes[his].areaHull;
-//        }
-//
-//        float radioArea = minarea / areaG;
-//
-//        std::cout << "radioArea " << radioArea << std::endl;
-//
-////        if (radioArea < 0.30)
-////            return;
-//
-//        std::vector<int> firstINdexes;
-//        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
-//            firstINdexes.push_back(it->first);
-//        }
-//
-//        pcl::PointCloud<pcl::PointXYZI> normPOints;
-//        for (int it = 0; it < firstINdexes.size(); ++it) {
-//            pcl::PointXYZI phe;
-//            phe.x = keyframe_vec[this_kf]->vPlanes[firstINdexes[it]].v3normal(0);
-//            phe.y = keyframe_vec[this_kf]->vPlanes[firstINdexes[it]].v3normal(1);
-//            phe.z = keyframe_vec[this_kf]->vPlanes[firstINdexes[it]].v3normal(2);
-//            normPOints.points.push_back(phe);
-//        }
-//
-//        //聚类
-//        pcl::search::KdTree<pcl::PointXYZI>::Ptr tree1(new pcl::search::KdTree<pcl::PointXYZI>);
-//        tree1->setInputCloud(normPOints.makeShared());
-//        std::vector<pcl::PointIndices> cluster_indices2;
-//        pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec1;
-//        ec1.setClusterTolerance(0.3);
-//        ec1.setMinClusterSize(1);
-//        ec1.setMaxClusterSize(100);
-//        ec1.setSearchMethod(tree1);
-//        ec1.setInputCloud(normPOints.makeShared());
-//        ec1.extract(cluster_indices2);
-//
-//////        if (cluster_indices2.size() == 2 && cluster_indices2[0].indices.size() == 3 && cluster_indices2[1].indices.size() == 1)
-//        if (cluster_indices2.size() < 2)
-//            return;
-//
-//        if (minarea/minarea2 < 0.85 || minarea/minarea2 > 1.18)
-//            return;
+//    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+//    {
+//        kvc.push_back(maps->vPlanes[it->first].v3center);
+//        lvc.push_back(last_keyframe->vPlanes[it->second].v3center);
+//        kvn.push_back(maps->vPlanes[it->first].v3normal);
+//        lvn.push_back(last_keyframe->vPlanes[it->second].v3normal);
 //    }
-
-    if (allMatchedSize < 6) {
-        return;
-    }
-
-
-    double icp_score = 0.0;
-
-    double icp_score_t = 0.0;
-
-    //////////////////////////////
-    std::vector<pcl::PointCloud<pcl::PointXYZI>> v_selectedPc;
-    std::vector<Eigen::Vector3d> v_selectedNorm;
-    std::vector<Eigen::Vector3d> v_selectedNormMatch;
-
-    std::vector<double> v_d;
-
-    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
-    {
-        pcl::PointCloud<pcl::PointXYZI> oriPlanePs;
-        oriPlanePs = *keyframe_vec[this_kf]->vPlanes[it->first].InplanePointCloudOriPtr;
-
-        pcl::VoxelGrid< pcl::PointXYZI > filterTmp;
-        filterTmp.setInputCloud( oriPlanePs.makeShared() );
-        filterTmp.setLeafSize( 1.0, 1.0, 1.0 );
-        filterTmp.filter( oriPlanePs );
-        v_selectedPc.push_back(oriPlanePs);
-        Eigen::Vector3d selct_n = last_keyframe->vPlanes[it->second].v3normal.cast<double>();
-        v_selectedNorm.push_back(selct_n);
-
-        Eigen::Vector3d selct_n1 = keyframe_vec[this_kf]->vPlanes[it->first].v3normal.cast<double>();
-        v_selectedNormMatch.push_back(selct_n1);
-
-        v_d.push_back(last_keyframe->vPlanes[it->second].d);
-    }
-
-    std::vector<Eigen::Vector3d> v_centriods;
-    std::vector<Eigen::Vector3d> v_centriodsMatch;
-
-    if (bestMatchVehicle.size() > 1 && abs(this_kf - this_kf_vehicle) < 2)
-    {
-        for (map<unsigned, unsigned>::iterator it = bestMatchVehicle.begin(); it != bestMatchVehicle.end(); it++)
-        {
-            Eigen::Vector3d selct_n = last_keyframe->vVehicles[it->second].v3center.cast<double>();
-            v_centriods.push_back(selct_n);
-
-            Eigen::Vector3d selct_n1 = keyframe_vec[this_kf_vehicle]->vVehicles[it->first].v3center.cast<double>();
-            v_centriodsMatch.push_back(selct_n1);
-        }
-    }
-
-
-    if (bestMatchPole.size() > 1 && abs(this_kf - this_kf_pole) < 2)
-    {
-        for (map<unsigned, unsigned>::iterator it = bestMatchPole.begin(); it != bestMatchPole.end(); it++)
-        {
-            Eigen::Vector3d selct_n = last_keyframe->vPoles[it->second].v3center.cast<double>();
-            v_centriods.push_back(selct_n);
-
-            Eigen::Vector3d selct_n1 = keyframe_vec[this_kf_pole]->vPoles[it->first].v3center.cast<double>();
-            v_centriodsMatch.push_back(selct_n1);
-
-        }
-    }
-
-    //////////////////////////////
-
-    Eigen::Quaterniond quaternion;
-    Eigen::Vector3d    trans(0,0,0);
-
-
-    double init_cost, final_cost;
-
-    double time_begMapAlign = pcl::getTime();
-
-    if (v_selectedNorm.size() > 2)
-        scene_align.find_init_tranfrom_of_two_mappings(v_selectedNorm, v_selectedNormMatch, quaternion);
-
-    if (v_centriods.size() > 2)
-        scene_align.find_init_tranfrom_of_two_mappings2(v_centriods, v_centriodsMatch, trans);
-
-    /************/
-//    std::cout<<"====test===="<<std::endl;
-//    std::cout<<keyframe_vec[this_kf]->m_accumulated_point_cloud.size()<<"  "<<keyframe_vec[this_kf]->m_accumulated_ng_pc.size()<<std::endl;
-//    std::cout<<float(keyframe_vec[this_kf]->m_accumulated_point_cloud.size())/float(keyframe_vec[this_kf]->m_accumulated_ng_pc.size())<<std::endl;
 //
-//    scene_align.find_tranfrom_of_two_mappings(keyframe_vec[this_kf]->m_accumulated_point_cloud, last_keyframe->m_accumulated_point_cloud, icp_score_t);
-//    scene_align.find_tranfrom_of_two_mappings(keyframe_vec[this_kf]->m_accumulated_ng_pc, last_keyframe->m_accumulated_ng_pc, icp_score_t);
-//    std::cout<<"====test===="<<std::endl;
-    /************/
+//
+//    //KITTI
+//    std::map<unsigned, unsigned> bestMatchVehicle; bestMatchVehicle.clear();
+//
+//    Subgraph currentSubgraph2(maps->vVehicles, 0);
+//    Subgraph targetSubgraph2(last_keyframe->vVehicles, 0);
+//
+//    unaycount = 0;
+//    std::map<unsigned, unsigned> resultingMatch1 = matcher.compareSubgraphsVehiclePlaneRef(currentSubgraph2, targetSubgraph2, unaycount, kvc,
+//                                                                                                  lvc, kvn, lvn);
+//
+//    bestMatchVehicle = resultingMatch1;
+//
+//    std::map<unsigned, unsigned> bestMatchPole; bestMatchPole.clear();
+//
+//    Subgraph currentSubgraph3(maps->vPoles, 0);
+//    Subgraph targetSubgraph3(last_keyframe->vPoles, 0);
+//
+//    unaycount = 0;
+//    std::map<unsigned, unsigned> resultingMatch2 = matcher.compareSubgraphsPolePlaneRef(currentSubgraph3, targetSubgraph3, unaycount, kvc,
+//                                                                                               lvc, kvn, lvn);
+//
+//    bestMatchPole = resultingMatch2;
+//
+//    std::cout<<"bestMatchPole.size() "<<bestMatchPole.size()<<std::endl;
+//    std::cout<<"bestMatchVehicle.size() "<<bestMatchVehicle.size()<<std::endl;
+//
+////    laserCloudOri_m2.height = 1;
+////    laserCloudOri_m2.width = vehiclesPointCloud->points.size();
+////    laserCloudOri_m2 = *vehiclesPointCloud;
+//
+//
 
-    scene_align.find_tranfrom_of_two_mappings(keyframe_vec[this_kf]->m_accumulated_surf_pc, keyframe_vec[this_kf]->m_accumulated_line_pc,
-                                              last_keyframe->m_accumulated_surf_pc, last_keyframe->m_accumulated_line_pc,
-                                              icp_score, v_selectedPc, v_selectedNorm, v_d, quaternion, trans, init_cost, final_cost);
 
-    double time_endMapAlign = pcl::getTime();
+//    laserCloudOri_m2.points.clear();
 
-    std::cout<<"align time "<<time_endMapAlign-time_begMapAlign<<std::endl;
+//     if (bestMatch.size() > 0)
+//         for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+//         {
+//             laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//             laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+//         }
+
+////    std::cout<<"matcher.allwinnerMatch.size() "<<matcher.allwinnerMatch.size()<<std::endl;
+////    if (matcher.allwinnerMatch.size() > 0)
+////        for (map<unsigned, unsigned>::iterator it = matcher.allwinnerMatch.begin(); it != matcher.allwinnerMatch.end(); it++)
+////        {
+////            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+////
+////            for (size_t k = 0 ; k < last_keyframe->vPlanes[it->second].planePointCloudPtr->points.size() ; ++k)
+////            {
+////                last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z = last_keyframe->vPlanes[it->second].planePointCloudPtr->points[k].z + 10.0;
+////            }
+////            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+////        }
+//
+////    pcl::copyPointCloud(*vehiclesPointCloud,laserCloudOri_m2);
+//
+////    laserCloudOri_m2 += *map_cylinder_points;
+////    laserCloudOri_m2 = *map_vehicle_points;
+//
+////    laserCloudOri_m2 += *map_structure_points;
+//
+////    for (size_t k = 0 ; k < vehiclesPointCloud->points.size() ; ++k)
+////    {
+////        vehiclesPointCloud->points[k].z = vehiclesPointCloud->points[k].z + 10.0;
+////    }
+////
+////    for (size_t k = 0 ; k < curPlanePoints->points.size() ; ++k)
+////    {
+////        curPlanePoints->points[k].z = curPlanePoints->points[k].z + 10.0;
+////    }
+////    laserCloudOri_m2 += *curPlanePoints;
+//
+//    //KITTI
+//    if (bestMatch.size() < 2) {
+//        return;
+//    }
+//
+//    std::vector<int> firstINdexes;
+//    for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++) {
+//        firstINdexes.push_back(it->first);
+//    }
+//
+//    pcl::PointCloud<pcl::PointXYZI> normPOints;
+//    for (int it = 0; it < firstINdexes.size(); ++it)
+//    {
+//        pcl::PointXYZI phe;
+//        phe.x = maps->vPlanes[firstINdexes[it]].v3normal(0);
+//        phe.y = maps->vPlanes[firstINdexes[it]].v3normal(1);
+//        phe.z = maps->vPlanes[firstINdexes[it]].v3normal(2);
+//        normPOints.points.push_back(phe);
+//    }
+//
+//    //聚类
+//    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree1(new pcl::search::KdTree<pcl::PointXYZI>);
+//    tree1->setInputCloud(normPOints.makeShared());
+//    std::vector<pcl::PointIndices> cluster_indices2;
+//    pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec1;
+//    ec1.setClusterTolerance(0.15);
+//    ec1.setMinClusterSize(1);
+//    ec1.setMaxClusterSize(100);
+//    ec1.setSearchMethod(tree1);
+//    ec1.setInputCloud(normPOints.makeShared());
+//    ec1.extract(cluster_indices2);
+//
+//    std::cout<<"cluster_indices2.size() "<<cluster_indices2.size()<<std::endl;
+//
+//    if (cluster_indices2.size() < 2) {
+//        return;
+//    }
+//
+////    if (bestMatch.size() < 3)
+////        return;
+//
+//    int allMatchedSize = bestMatch.size();
+//
+//    allMatchedSize += bestMatchVehicle.size();
+//
+//    allMatchedSize += bestMatchPole.size();
+//
+////    if (bestMatchVehicle.size() > 1)
+////    {
+////        allMatchedSize += bestMatchVehicle.size();
+////    }
+////    if (bestMatchPole.size() > 1)
+////    {
+////        allMatchedSize += bestMatchPole.size();
+////    }
+//
+//
+////    std::cout<<"comp time "<<aveTime/(pointSearchInd.size())<<std::endl;
+//
+    // std::cout<<"allMatchedSize "<<allMatchedSize<<std::endl;
 
 
-    std::cout<<icp_score<<"  "<<init_cost<<"  "<<final_cost<<std::endl;
+    //    laserCloudOri_m2.points.clear();
 
-    std::cout<<"=============**************"<<std::endl;
-
-    printf("ICP inlier threshold = %lf\r\n", icp_score);
-
-    auto Q_a = pose3d_vec[this_kf].q;
-    auto Q_b = pose3d_vec[pose3d_vec.size() - 1].q;
-    auto T_a = pose3d_vec[this_kf].p;
-    auto T_b = pose3d_vec[pose3d_vec.size() - 1].p;
-    auto ICP_q = scene_align.m_q_w_curr;
-    auto ICP_t = scene_align.m_t_w_curr;
-
-    ICP_t = ( ICP_q.inverse() * ( -ICP_t ) );
-    ICP_q = ICP_q.inverse();
-
-    std::cout << "ICP_q = " << ICP_q.coeffs().transpose() << std::endl;
-    std::cout << "ICP_t = " << ICP_t.transpose() << std::endl;
-
-    if ( icp_score < 0.31 )
-
-//    if ( icp_score < 0.31 && final_cost > 50.0)
-    {
-
-        v_icp.push_back(icp_score_t);
-
-        double t_s = 0.0;
-        for (auto item : v_icp)
-        {
-            t_s += item;
-        }
-
-        std::cout<<"t_s ave: "<<t_s/v_icp.size()<<std::endl;
-
+//    if (bestMatch.size() > 0)
 //        for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
 //        {
-//            laserCloudOri_m2 += *keyframe_vec[this_kf]->vPlanes[it->first].planePointCloudPtr;
+//            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
 //            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
 //        }
 
-        for (map<unsigned, unsigned>::iterator it = bestMatchVehicle.begin(); it != bestMatchVehicle.end(); it++)
-        {
-            laserCloudOri_m2 += *keyframe_vec[this_kf_vehicle]->vVehicles[it->first].VehiclePointCloudPtr;
-            laserCloudOri_m2 += *last_keyframe->vVehicles[it->second].VehiclePointCloudPtr;
-        }
 
-        std::cout<<"bestMatchVehicle.size() "<<bestMatchVehicle.size()<<std::endl;
-        std::cout<<"last_keyframe->vVehicles.size() "<<last_keyframe->vVehicles.size()<<std::endl;
-        std::cout<<"keyframe_vec[this_kf_vehicle]->vVehicles.size() "<<keyframe_vec[this_kf_vehicle]->vVehicles.size()<<std::endl;
-
-
-        printf("I believe this is true loop.\r\n");
-
-        VectorOfConstraints constrain_vec_temp;
-        constrain_vec_temp = constrain_vec;
-
-        /*闭环约束*/
-        Constraint3d pose_constrain;
-        auto q_res = Q_b.inverse() * ICP_q.inverse() * Q_a;
-        //q_res = q_res.inverse();
-        auto t_res = Q_b.inverse() * ( ICP_q.inverse() * ( T_a - ICP_t ) - T_b );
-        //t_res = q_res.inverse()*(-t_res);
-        //q_res = q_res.inverse();
-
-//                cout << "=== Add_constrain_of_loop ====" << endl;
-//                cout << Q_a.coeffs().transpose() << endl;
-//                cout << Q_b.coeffs().transpose() << endl;
-//                cout << ICP_q.coeffs().transpose() << endl;
-//                cout << T_a.transpose() << endl;
-//                cout << T_b.transpose() << endl;
-//                cout << ICP_t.transpose() << endl;
-//                cout << "Result: " << endl;
-//                cout << q_res.coeffs().transpose() << endl;
-//                cout << t_res.transpose() << endl;
-
-        //t_res.setZero();
-        pose_constrain.id_begin = pose3d_vec.size() - 1;
-        pose_constrain.id_end = this_kf;
-        pose_constrain.t_be.p = t_res;
-        pose_constrain.t_be.q = q_res;
-        /*闭环约束*/
-
-
-        loop_closure_matchedid[pose3d_vec.size() - 1] = this_kf;
-
-        constrain_vec_temp.push_back( pose_constrain );
-
-
-        pose3d_map_ori = pose3d_map;
-        auto temp_pose_3d_map = pose3d_map;
-
-        pose_graph_optimization(temp_pose_3d_map, constrain_vec_temp);
-
-        optimized_pose3d_map = temp_pose_3d_map;
-
-        ////////
-
-//        constrain_vec = constrain_vec_temp;
-//        pose3d_map = temp_pose_3d_map;
-
-        ////////
-
-        OutputPoses( std::string("/home/jjwen/result/poses_ori.txt" ), pose3d_map_ori );
-        OutputPoses( std::string( "/home/jjwen/result/poses_opm.txt" ), temp_pose_3d_map );
-
-
-//        refined_pt = map_rfn.refine_pointcloud( map_id_pc, pose3d_map_ori, temp_pose_3d_map, ( int ) map_id_pc.size() - 1);
-
-        refined_pt.points.clear();
-        refined_pt_bef.points.clear();
-
-        for ( int pc_idx = ( int ) map_id_pc.size() - 1; pc_idx >= 0; pc_idx -= 2 )
-        {
-//            std::cout << "*** Refine pointcloud, curren idx = " << pc_idx << " ***" << endl;
-            refined_pt += map_rfn.refine_pointcloud( map_id_pc, pose3d_map_ori, temp_pose_3d_map, pc_idx);
-
-            refined_pt_bef += map_rfn.refine_pointcloud( map_id_pc, pose3d_map_ori, pose3d_map_ori, pc_idx);
-
-
-        }
-        //map_rfn.refine_mapping( path_name, 0 );
-        if ( 0 )
-        {
-            map_rfn.refine_mapping( map_id_pc, pose3d_map_ori, temp_pose_3d_map);
-//            map_rfn.m_pts_aft_refind
-        }
-
+//KITTI
+    if (allMatchedSize < 7) {
+        return;
     }
+
+    std::cout<<"localization successful !"<<std::endl;
+
+//    laserCloudOri_m2.points.clear();
+   if (bestMatch.size() > 0)
+       for (map<unsigned, unsigned>::iterator it = bestMatch.begin(); it != bestMatch.end(); it++)
+       {
+           laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+           laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+       }
+
+
+
+
+//    if (allgreatestMatch.size() > 0)
+//        for (map<unsigned, unsigned>::iterator it = allgreatestMatch.begin(); it != allgreatestMatch.end(); it++)
+//        {
+//            laserCloudOri_m2 += *maps->vPlanes[it->first].planePointCloudPtr;
+//            laserCloudOri_m2 += *last_keyframe->vPlanes[it->second].planePointCloudPtr;
+//        }
+
+
+
+//    if (bestMatchVehicle.size() > 0)
+//        for (map<unsigned, unsigned>::iterator it = bestMatchVehicle.begin(); it != bestMatchVehicle.end(); it++)
+//        {
+//            laserCloudOri_m2 += *maps->vVehicles[it->first].VehiclePointCloudPtr;
+//            laserCloudOri_m2 += *last_keyframe->vVehicles[it->second].VehiclePointCloudPtr;
+//        }
+
+//    if (bestMatchPole.size() > 0)
+//        for (map<unsigned, unsigned>::iterator it = bestMatchPole.begin(); it != bestMatchPole.end(); it++)
+//        {
+//            laserCloudOri_m2 += *maps->vPoles[it->first].PolePointCloudPtr;
+//            laserCloudOri_m2 += *last_keyframe->vPoles[it->second].PolePointCloudPtr;
+//        }
 
 }
 
 
+
+
+void LiPMatch::genGlobalMap()
+{}
 
 
 
@@ -903,7 +2688,7 @@ void LiPMatch::run()
     {
         if( numPrevKFs == frameQueue.size() )
         {
-          sleep(10);
+            sleep(10);
         }
         else
         {
@@ -938,5 +2723,10 @@ LiPMatch::~LiPMatch()
 
     cout << " .. LiPMatch has died." << endl;
 }
+
+
+
+
+
 
 

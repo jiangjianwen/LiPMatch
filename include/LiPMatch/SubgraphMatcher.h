@@ -9,19 +9,17 @@
 #include <Vehicle.h>
 
 namespace LiPMatch_ns {
+        
+        class SubgraphMatcher
+        {
+                public:
+                SubgraphMatcher();
+                
+                bool evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2);
 
+                bool evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &vehicle2);
 
-  class SubgraphMatcher
-  {
-   public:
-
-    SubgraphMatcher();
-
-    bool evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2);
-
-    bool evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &vehicle2);
-
-    bool evalUnaryConstraintsPole(Pole &pole1, Pole &pole2);
+                bool evalUnaryConstraintsPole(Pole &pole1, Pole &pole2);
 
     bool evalBinaryConstraints(Plane &plane1, Plane &plane2, Plane &planeA, Plane &planeB);
 
@@ -29,13 +27,19 @@ namespace LiPMatch_ns {
 
     bool evalBinaryConstraintsPole(Pole &Ref, Pole &neigRef, Pole &Check, Pole &neigCheck);
 
-    std::vector<std::map<unsigned,unsigned> > alreadyExplored;
 
     void exploreSubgraphTreeR(std::set<unsigned> &evalRef, std::set<unsigned> &evalCheck, std::map<unsigned, unsigned> &matched);
 
     void exploreSubgraphTreeRVehicle(std::set<unsigned> &sourceVehicles, std::set<unsigned> &targetVehicles, std::map<unsigned, unsigned> &matched);
 
+
+    void exploreSubgraphTreeRVehicleWithoutP(std::set<unsigned> &sourceVehicles, std::set<unsigned> &targetVehicles, std::map<unsigned, unsigned> &matched);
+
+
     void exploreSubgraphTreeRPole(std::set<unsigned> &sourcePoles, std::set<unsigned> &targetPoles, std::map<unsigned, unsigned> &matched);
+
+
+    void exploreSubgraphTreeRPoleWithoutP(std::set<unsigned> &sourcePoles, std::set<unsigned> &targetPoles, std::map<unsigned, unsigned> &matched);
 
 
 
@@ -46,78 +50,124 @@ namespace LiPMatch_ns {
                                                                 std::vector<Eigen::Vector3f>& kvc, std::vector<Eigen::Vector3f>& lvc,
                                                                 std::vector<Eigen::Vector3f>& kvn, std::vector<Eigen::Vector3f>& lvn);
 
+    std::map<unsigned,unsigned> compareSubgraphsVehicleWithoutPlaneRef(Subgraph &subgraphSource, Subgraph &subgraphTarget, int& unaryCount);
+
     std::map<unsigned,unsigned> compareSubgraphsPolePlaneRef(Subgraph &subgraphSource, Subgraph &subgraphTarget, int& unaryCount,
                                                              std::vector<Eigen::Vector3f>& kvc, std::vector<Eigen::Vector3f>& lvc,
                                                              std::vector<Eigen::Vector3f>& kvn, std::vector<Eigen::Vector3f>& lvn);
 
 
+    std::map<unsigned,unsigned> compareSubgraphsPoleWithoutPlaneRef(Subgraph &subgraphSource, Subgraph &subgraphTarget, int& unaryCount);
+
+
     Subgraph *subgraphSrc;
 
     Subgraph *subgraphTrg;
-
-    float wdif_height;
-    float wdif_height2;
-    float wdif_normal;
-    float wrel_dist_centers;
-
-    float wal;
-    float wea;
+    
 
 
-//    float height_threshold = 1.75;
-//    float angle_threshold = 1.75;
-//    float dist_threshold = 1.75;
-//
-////      matcher.height_threshold = 1.25;
-////      matcher.angle_threshold = 2.0;
-////      matcher.dist_threshold = 1.5;
-//
-//    float area_threshold = 1.65;
-//    float elongation_threshold = 1.65;
-
-      float radios = 1.72;
-
-      float height_threshold = radios;
-      float angle_threshold = radios;
-      float dist_threshold = radios;
-      float area_threshold = radios;
-      float elongation_threshold = radios;
 
 
-//        float height_threshold = 1.7;
-//        float angle_threshold = 1.7;
-//        float dist_threshold = 1.7;
-//
-////      matcher.height_threshold = 1.25;
-////      matcher.angle_threshold = 2.0;
-////      matcher.dist_threshold = 1.5;
-//
-//        float area_threshold = 1.7;
-//        float elongation_threshold = 1.7;
+      float radios = 1.45;
+
+        float height_threshold = 1.45;
+
+        float angle_threshold = 1.30;
+
+        float dist_threshold = 1.45;
 
 
+        // float height_threshold = 1.25;
+
+        // float angle_threshold = 1.30;
+
+        // float dist_threshold = 1.25;
+
+
+
+        float area_threshold = 1.85;
+
+        float elongation_threshold = 1.85;
+
+        float elongation_threshold2 = 1.85;
+
+
+
+
+        float dist_thresholdvpv = 1.50;
+
+        float dist_thresholdvp = 1.40;
+
+
+        float dist_thresholdp = 1.03;
+
+
+        // float dist_thresholdv = 1.30;
+        float dist_thresholdv = 1.07;
+
+
+
+
+
+        std::vector<std::vector<int8_t> > hashUnaryConstraints;
+
+        std::map<unsigned, unsigned> allwinnerMatch;
+
+        std::vector<std::map<unsigned, unsigned> > allMatchGroups;
+        std::vector<int> allMatchGroupsSize;
+
+
+        std::vector<float> allMatchGroups_height;
+        std::vector<float> allMatchGroups_normal;
+        std::vector<float> allMatchGroups_dist_centers;
+
+        std::vector<Eigen::Vector3f> v_kvc;
+        std::vector<Eigen::Vector3f> v_lvc;
+
+        std::vector<float> vdif_height;
+        std::vector<float> vdif_height2;
+        std::vector<float> vdif_normal;
+        std::vector<float> vrel_dist_centers;
+
+        std::vector<float> vdif_v_2_v;
+
+        std::vector<float> vah;
+        std::vector<float> vea;
+
+        float wdif_height;
+        float wdif_height2;
+        float wdif_normal;
+        float wrel_dist_centers;
+
+        float wal;
+        float wea;
+
+        bool withoutplanevehilceok = false;
+
+        bool withoutplanecylinderok = false;
+ 
   private:
 
     std::map<unsigned, unsigned> winnerMatch;
+
+
+
+    float winnerMatchArea;
 
     std::map<unsigned, unsigned> winnerMatchVehicle;
 
     std::map<unsigned, unsigned> winnerMatchPole;
 
-    std::vector<std::vector<int8_t> > hashUnaryConstraints;
 
     std::vector<Eigen::Vector3f> c_kvc;
     std::vector<Eigen::Vector3f> c_lvc;
     std::vector<Eigen::Vector3f> c_kvn;
     std::vector<Eigen::Vector3f> c_lvn;
 
-    std::vector<float> vdif_height;
-    std::vector<float> vdif_height2;
-    std::vector<float> vdif_normal;
-    std::vector<float> vrel_dist_centers;
 
-    std::vector<float> vah;
-    std::vector<float> vea;
+
+
+
 
   };
 

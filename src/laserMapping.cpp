@@ -182,17 +182,19 @@ LiPMatch lipmatch;
 std::list<m_keyframe> m_keyframe_of_updating_list;
 std::list<m_keyframe> m_keyframe_need_precession_list;
 
+pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tosave(new pcl::PointCloud<pcl::PointXYZRGBA>());
+
 
 bool loop_closuring = true;
 
 /*new add*/
-typedef std::tuple< u_char, u_char, u_char> semantic_color;
+//typedef std::tuple< u_char, u_char, u_char> semantic_color;
 
 std::string model_path;
 std::shared_ptr<RangenetAPI> net;
 
 std::vector<int> label_map_;
-std::map<uint32_t, semantic_color> color_map_;
+//std::map<uint32_t, semantic_color> color_map_;
 
 namespace cl = rangenet::segmentation;
 
@@ -221,6 +223,20 @@ void pointAssociateToMap(PointType const *const pi, PointType *const po)
 	po->intensity = pi->intensity;
 	//po->intensity = 1.0;
 }
+
+
+void pointAssociateToMap(pcl::PointXYZRGBA const *const pi, pcl::PointXYZRGBA *const po)
+{
+    Eigen::Vector3d point_curr(pi->x, pi->y, pi->z);
+    Eigen::Vector3d point_w = q_w_curr * point_curr + t_w_curr;
+    po->x = point_w.x();
+    po->y = point_w.y();
+    po->z = point_w.z();
+    po->r = pi->r;
+    po->g = pi->g;
+    po->b = pi->b;
+}
+
 
 void pointAssociateTobeMapped(PointType const *const pi, PointType *const po)
 {
@@ -940,7 +956,9 @@ void process()
 			int laserCloudFullResNum = laserCloudFullRes->points.size();
 
             pcl::PointCloud<pcl::PointXYZI> laserCloudIn;
+
             pcl::copyPointCloud(*laserCloudFullRes, laserCloudIn);
+
 
             /*new add*/
 //            std::cout<<"semantic segment start !"<<std::endl;
@@ -999,6 +1017,11 @@ void process()
             pcl::PointCloud<pcl::PointXYZI>::Ptr structure_points(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr vehicle_points(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr nature_points(new pcl::PointCloud<pcl::PointXYZI>());
+
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr structure_pointsrgb (new pcl::PointCloud<pcl::PointXYZRGBA>);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr vehicle_pointsrgb (new pcl::PointCloud<pcl::PointXYZRGBA>);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr nature_pointsrgb (new pcl::PointCloud<pcl::PointXYZRGBA>);
+
             pcl::PointCloud<pcl::PointXYZI>::Ptr human_points(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr object_points(new pcl::PointCloud<pcl::PointXYZI>());
             pcl::PointCloud<pcl::PointXYZI>::Ptr dynamic_points(new pcl::PointCloud<pcl::PointXYZI>());
@@ -1060,27 +1083,69 @@ void process()
 //                16: "on-rails"
 //                18: "truck"
 
-
-                if (labels[i] == 40 || labels[i] == 44 || labels[i] == 48 || labels[i] == 49) {
+                //ground
+                if (labels[i] == 40 || labels[i] == 44 || labels[i] == 48 || labels[i] == 49)
+                {
                     ground_points->points.push_back(laserCloudIn.points[i]);
                     nveg_points->points.push_back(laserCloudIn.points[i]);
                 }
+                //structure
                 else if (labels[i] == 50 || labels[i] == 51 || labels[i] == 52 || labels[i] == 60) {
+
+//                    pcl::PointXYZRGBA tp1;
+//                    tp1.x = laserCloudIn.points[i].x;
+//                    tp1.y = laserCloudIn.points[i].y;
+//                    tp1.z = laserCloudIn.points[i].z;
+//                    tp1.r = 255.0;
+//                    tp1.g = 0.0;
+//                    tp1.b = 0.0;
+//                    structure_pointsrgb->points.push_back(tp1);
+
+
 //                else if (labels[i] == 50 || labels[i] == 51)
                     structure_points->points.push_back(laserCloudIn.points[i]);
+
+
                     nveg_points->points.push_back(laserCloudIn.points[i]);
 //                else if (labels[i] == 10 || labels[i] == 11 || labels[i] == 13 || labels[i] == 15 || labels[i] == 16
 //                || labels[i] == 18 || labels[i] == 20)
                 }
+                //vehicle
                 else if (labels[i] == 10 || labels[i] == 13 || labels[i] == 18 || labels[i] == 16) {
+
+//                    pcl::PointXYZRGBA tp1;
+//                    tp1.x = laserCloudIn.points[i].x;
+//                    tp1.y = laserCloudIn.points[i].y;
+//                    tp1.z = laserCloudIn.points[i].z;
+//                    tp1.r = 0.0;
+//                    tp1.g = 255.0;
+//                    tp1.b = 0.0;
+//
+//                    vehicle_pointsrgb->points.push_back(tp1);
+
                     vehicle_points->points.push_back(laserCloudIn.points[i]);
                     nveg_points->points.push_back(laserCloudIn.points[i]);
                 }
+                //cylinder
                 else if (labels[i] == 71 || labels[i] == 80) {
+
+
+//                    pcl::PointXYZRGBA tp1;
+//                    tp1.x = laserCloudIn.points[i].x;
+//                    tp1.y = laserCloudIn.points[i].y;
+//                    tp1.z = laserCloudIn.points[i].z;
+//                    tp1.r = 0.0;
+//                    tp1.g = 0.0;
+//                    tp1.b = 255.0;
+//                    nature_pointsrgb->points.push_back(tp1);
+
+
 //                else if (labels[i] == 70 || labels[i] == 71 || labels[i] == 72)
 //                    if (labels_prob[i] < 0.9)
 //                        continue;
                     nature_points->points.push_back(laserCloudIn.points[i]);
+
+
                 }
                 else if (labels[i] == 30 || labels[i] == 31 || labels[i] == 32)
                     human_points->points.push_back(laserCloudIn.points[i]);
@@ -1101,11 +1166,29 @@ void process()
 
             *nveg_points2 = laserCloudIn;
 
-//            std::cout<<std::endl;
+
+
+//            pcl::PointCloud<pcl::PointXYZI>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZI>);
+//            if (pcl::io::loadPCDFile<pcl::PointXYZI>("/home/jjwen/datasemantic/0.pcd", *cloud1) == -1) {
+//                PCL_ERROR("Couldn't read file rabbit.pcd\n");
+////                return(-1);
+//            }
+//            std::cout << cloud1->points.size() << std::endl;
+//
+//            for (size_t tt = 0 ; tt < cloud1->points.size() ; ++tt)
+//            {
+//                std::cout<<cloud1->points[tt].intensity<<" ";
+//            }
+
+
+
 //            /*new add*/
 
             downSizeFilterKF.setInputCloud(structure_points);
             downSizeFilterKF.filter(*structure_points);
+
+            downSizeFilterKF.setInputCloud(ground_points);
+            downSizeFilterKF.filter(*ground_points);
 
             downSizeFilterKF.setInputCloud(vehicle_points);
             downSizeFilterKF.filter(*vehicle_points);
@@ -1128,6 +1211,11 @@ void process()
             for (int i = 0; i < structure_points->points.size(); i++)
             {
                 pointAssociateToMap(&structure_points->points[i], &structure_points->points[i]);
+            }
+
+            for (int i = 0; i < ground_points->points.size(); i++)
+            {
+                pointAssociateToMap(&ground_points->points[i], &ground_points->points[i]);
             }
 
             for (int i = 0; i < vehicle_points->points.size(); i++)
@@ -1160,6 +1248,28 @@ void process()
                 pointAssociateToMap(&nveg_points2->points[i], &nveg_points2->points[i]);
             }
 
+            //////////////////////////////////////////
+//            for (int i = 0; i < structure_pointsrgb->points.size(); i++)
+//            {
+//                pointAssociateToMap(&structure_pointsrgb->points[i], &structure_pointsrgb->points[i]);
+//            }
+//            for (int i = 0; i < vehicle_pointsrgb->points.size(); i++)
+//            {
+//                pointAssociateToMap(&vehicle_pointsrgb->points[i], &vehicle_pointsrgb->points[i]);
+//            }
+//            for (int i = 0; i < nature_pointsrgb->points.size(); i++)
+//            {
+//                pointAssociateToMap(&nature_pointsrgb->points[i], &nature_pointsrgb->points[i]);
+//            }
+
+//            *tosave += *structure_pointsrgb;
+//            *tosave += *vehicle_pointsrgb;
+//            *tosave += *nature_pointsrgb;
+//
+//            std::cout<<"save !!"<<std::endl;
+//            pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/test_pcd.pcd", *tosave); //将点云保存到PCD文件中
+
+
 //            sensor_msgs::PointCloud2 matchedCloudOutMsg1;
 //            pcl::toROSMsg(*lane_points, matchedCloudOutMsg1);
 //            matchedCloudOutMsg1.header.stamp = ros::Time().fromSec(timeLaserOdometry);
@@ -1184,8 +1294,9 @@ void process()
                 *(it->naturelaserCloud) += *nature_points;
                 *(it->objectlaserCloud) += *object_points;
 
-                *(it->orilaserCloud) += *nveg_points;
-                it->g_laserCloud += *nveg_points2;
+//                *(it->orilaserCloud) += *nveg_points;
+
+                *(it->g_laserCloud) += *ground_points;
 
 //                *(it->orilaserCloud) += *nglaserCloudSurfStack;
 //                *(it->orilaserCloud) += *laserCloudSurfStack;
@@ -1220,8 +1331,8 @@ void process()
             points.color.a = 1.0;
 
 
-            //30
-            if ( m_keyframe_of_updating_list.front().travel_length >= 32.0 )
+            //30 32
+            if ( m_keyframe_of_updating_list.front().travel_length >= 30.0 )
             {
                 m_keyframe_of_updating_list.front().m_ending_frame_idx = frameCount;
                 m_keyframe_of_updating_list.front().m_pose_q = q_w_curr;
@@ -1251,28 +1362,19 @@ void process()
                 /////////
             }
 
-            //25
-
-            if ( m_keyframe_of_updating_list.back().travel_length >= 26.0 )
+            //25 26
+            if ( m_keyframe_of_updating_list.back().travel_length >= 25.0 )
             {
+
+//                *tosave += *structure_pointsrgb;
+//                *tosave += *vehicle_pointsrgb;
+//                *tosave += *nature_pointsrgb;
+//
+//                std::cout<<"save !!"<<std::endl;
+//                pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/test_pcd.pcd", *tosave); //将点云保存到PCD文件中
+
+
                 m_keyframe tk1;
-                tk1.framecount = 0;
-                tk1.travel_length = 0.0;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr1(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.orilaserCloud = tptr1;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr2(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.surflaserCloud = tptr2;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr3(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.linelaserCloud = tptr3;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr7(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.structurelaserCloud = tptr7;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr4(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.vehiclelaserCloud = tptr4;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr5(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.naturelaserCloud = tptr5;
-                pcl::PointCloud<pcl::PointXYZI>::Ptr tptr6(new pcl::PointCloud<pcl::PointXYZI>());
-                tk1.objectlaserCloud = tptr6;
-                tk1.m_ending_frame_idx = 0;
                 m_keyframe_of_updating_list.push_back(tk1);
             }
 
@@ -1283,7 +1385,7 @@ void process()
             pubMatchedPoints1.publish(matchedCloudOutMsg1);
 
             sensor_msgs::PointCloud2 matchedCloudOutMsg2;
-            pcl::toROSMsg(lipmatch.laserCloudOri_m2, matchedCloudOutMsg2);
+            pcl::toROSMsg(lipmatch.laserCloudOri_m2_1, matchedCloudOutMsg2);
             matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
             matchedCloudOutMsg2.header.frame_id = "/camera_init";
             pubMatchedPoints2.publish(matchedCloudOutMsg2);
@@ -1362,7 +1464,6 @@ void process()
             pubLaserCloudFullResbef.publish(laserCloudFullRes4);
 
 
-
 //			printf("mapping pub time %f ms \n", t_pub.toc());
 
 //			printf("whole mapping time %f ms +++++\n", t_whole.toc());
@@ -1432,13 +1533,15 @@ int main(int argc, char **argv)
 //	printf("line resolution %f plane resolution %f \n", lineRes, planeRes);
 	downSizeFilterCorner.setLeafSize(lineRes, lineRes,lineRes);
 	downSizeFilterSurf.setLeafSize(planeRes, planeRes, planeRes);
-    downSizeFilterKF.setLeafSize(planeRes/2.0,planeRes/2.0,planeRes/2.0);
+//    downSizeFilterKF.setLeafSize(planeRes/2.0,planeRes/2.0,planeRes/2.0);
+
+    downSizeFilterKF.setLeafSize(0.2, 0.2, 0.2);
 
     nh.param<std::string>("model_path", model_path, "/home/jjwen/model/darknet53");
 
     net = std::shared_ptr<RangenetAPI> (new RangenetAPI(model_path));
     label_map_ = net->getLabelMap();
-    color_map_ = net->getColorMap();
+//    color_map_ = net->getColorMap();
 
 
 
@@ -1490,22 +1593,6 @@ int main(int argc, char **argv)
     ngKeyframelaserCloud.reset(new pcl::PointCloud<PointType>());
 
     m_keyframe tk;
-    tk.framecount = 0;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.orilaserCloud = tptr;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr1(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.surflaserCloud = tptr1;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr2(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.linelaserCloud = tptr2;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr3(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.structurelaserCloud = tptr3;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr4(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.vehiclelaserCloud = tptr4;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr5(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.naturelaserCloud = tptr5;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr tptr6(new pcl::PointCloud<pcl::PointXYZI>());
-    tk.objectlaserCloud = tptr6;
-    tk.m_ending_frame_idx = 0;
     m_keyframe_of_updating_list.push_back(tk);
 
     std::thread mapping_process{process};

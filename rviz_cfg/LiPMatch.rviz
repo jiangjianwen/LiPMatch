@@ -20,8 +20,12 @@ Panels:
         - /PointCloud26
         - /PointCloud27
         - /PointCloud28
+        - /PointCloud210
+        - /PointCloud211
+        - /PointCloud212
+        - /PointCloud213
       Splitter Ratio: 0.5
-    Tree Height: 513
+    Tree Height: 776
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -30,7 +34,7 @@ Panels:
       - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
-    Splitter Ratio: 0.5886790156364441
+    Splitter Ratio: 0.588679016
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -41,8 +45,6 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: PointCloud2
-Preferences:
-  PromptSaveOnExit: true
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -54,7 +56,7 @@ Visualization Manager:
       Color: 160; 160; 164
       Enabled: false
       Line Style:
-        Line Width: 0.029999999329447746
+        Line Width: 0.0299999993
         Value: Lines
       Name: Grid
       Normal Cell Count: 0
@@ -70,7 +72,7 @@ Visualization Manager:
       Enabled: true
       Length: 1
       Name: Axes
-      Radius: 0.10000000149011612
+      Radius: 0.100000001
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/Group
@@ -80,11 +82,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 255; 170; 0
           Enabled: false
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
           Line Style: Lines
-          Line Width: 0.029999999329447746
+          Line Width: 0.0299999993
           Name: gtPathlc
           Offset:
             X: 0
@@ -92,9 +94,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
           Topic: /path_gt
           Unreliable: false
           Value: false
@@ -103,11 +105,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 255; 170; 0
           Enabled: true
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
           Line Style: Lines
-          Line Width: 0.029999999329447746
+          Line Width: 0.0299999993
           Name: gtPathLidar
           Offset:
             X: 0
@@ -115,9 +117,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
           Topic: /path_gt_lidar
           Unreliable: false
           Value: true
@@ -130,11 +132,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 255; 85; 0
           Enabled: true
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
           Line Style: Lines
-          Line Width: 0.10000000149011612
+          Line Width: 0.100000001
           Name: odomPath
           Offset:
             X: 0
@@ -142,9 +144,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
           Topic: /laser_odom_path
           Unreliable: false
           Value: true
@@ -163,15 +165,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 63.10047912597656
+          Max Intensity: 63.1004791
           Min Color: 0; 0; 0
-          Min Intensity: -0.0067862942814826965
+          Min Intensity: -0.00678629428
           Name: PointCloud2
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (m): 0.0500000007
           Style: Flat Squares
           Topic: /velodyne_cloud_2
           Unreliable: false
@@ -187,11 +189,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 25; 255; 0
           Enabled: true
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
           Line Style: Lines
-          Line Width: 0.029999999329447746
+          Line Width: 0.0299999993
           Name: mappingPath
           Offset:
             X: 0
@@ -199,9 +201,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
           Topic: /aft_mapped_path
           Unreliable: false
           Value: true
@@ -228,7 +230,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (m): 0.0500000007
           Style: Flat Squares
           Topic: /laser_cloud_map
           Unreliable: false
@@ -258,7 +260,7 @@ Visualization Manager:
           Queue Size: 1
           Selectable: true
           Size (Pixels): 1
-          Size (m): 0.05000000074505806
+          Size (m): 0.0500000007
           Style: Squares
           Topic: /laser_cloud_surround
           Unreliable: false
@@ -288,7 +290,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.30000001192092896
+          Size (m): 0.300000012
           Style: Flat Squares
           Topic: /laser_cloud_ngpoints
           Unreliable: false
@@ -310,15 +312,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 50.14165496826172
+          Max Intensity: 50.141655
           Min Color: 0; 0; 0
-          Min Intensity: -0.02395477518439293
+          Min Intensity: -0.0239547752
           Name: currPoints
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 2
-          Size (m): 0.009999999776482582
+          Size (m): 0.00999999978
           Style: Points
           Topic: /velodyne_cloud_registered
           Unreliable: false
@@ -340,15 +342,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 63.03843307495117
+          Max Intensity: 63.0384331
           Min Color: 255; 0; 0
-          Min Intensity: -0.006431261543184519
+          Min Intensity: -0.00643126154
           Name: corner
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.20000000298023224
+          Size (m): 0.200000003
           Style: Flat Squares
           Topic: /mapping_corner
           Unreliable: false
@@ -370,15 +372,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 63.0818977355957
+          Max Intensity: 63.0818977
           Min Color: 0; 0; 0
-          Min Intensity: -0.005241604056209326
+          Min Intensity: -0.00524160406
           Name: surf
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.20000000298023224
+          Size (m): 0.200000003
           Style: Flat Squares
           Topic: /mapping_surf
           Unreliable: false
@@ -400,9 +402,9 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 17.08800506591797
+          Max Intensity: 17.0880051
           Min Color: 0; 0; 0
-          Min Intensity: -0.006790489889681339
+          Min Intensity: -0.00679048989
           Name: used_corner
           Position Transformer: XYZ
           Queue Size: 10
@@ -430,9 +432,9 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 0; 255; 0
-          Max Intensity: 63.0818977355957
+          Max Intensity: 63.0818977
           Min Color: 0; 0; 0
-          Min Intensity: -0.005241604056209326
+          Min Intensity: -0.00524160406
           Name: used_surf
           Position Transformer: XYZ
           Queue Size: 10
@@ -460,15 +462,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 21.062847137451172
+          Max Intensity: 21.0628471
           Min Color: 0; 0; 0
-          Min Intensity: -0.006625724025070667
+          Min Intensity: -0.00662572403
           Name: map_corner
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
+          Size (m): 0.100000001
           Style: Flat Squares
           Topic: /mapping_map_corner
           Unreliable: false
@@ -490,15 +492,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 63.08392333984375
+          Max Intensity: 63.0839233
           Min Color: 0; 0; 0
-          Min Intensity: -0.00876065157353878
+          Min Intensity: -0.00876065157
           Name: map_surf
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
+          Size (m): 0.100000001
           Style: Flat Squares
           Topic: /mapping_map_surf
           Unreliable: false
@@ -510,11 +512,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 25; 255; 0
           Enabled: false
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
           Line Style: Lines
-          Line Width: 0.029999999329447746
+          Line Width: 0.0299999993
           Name: leftcameraPath
           Offset:
             X: 0
@@ -522,9 +524,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
           Topic: /lc_path
           Unreliable: false
           Value: false
@@ -555,7 +557,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.009999999776482582
+          Size (m): 0.00999999978
           Style: Points
           Topic: /laser_cloud_sharp
           Unreliable: false
@@ -577,15 +579,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 63.03987121582031
+          Max Intensity: 63.0398712
           Min Color: 0; 0; 0
-          Min Intensity: 0.0263746976852417
+          Min Intensity: 0.0263746977
           Name: flat
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (m): 0.0500000007
           Style: Flat Squares
           Topic: /laser_cloud_flat
           Unreliable: false
@@ -607,7 +609,7 @@ Visualization Manager:
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 0.9900000095367432
+          Max Intensity: 0.99000001
           Min Color: 0; 0; 0
           Min Intensity: 0
           Name: raw_data
@@ -615,7 +617,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.05000000074505806
+          Size (m): 0.0500000007
           Style: Flat Squares
           Topic: /velodyne_points
           Unreliable: false
@@ -637,15 +639,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 0.12361729145050049
+          Max Intensity: 0.123617291
           Min Color: 0; 0; 0
-          Min Intensity: -0.00711920578032732
+          Min Intensity: -0.00711920578
           Name: scan
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.20000000298023224
+          Size (m): 0.200000003
           Style: Flat Squares
           Topic: /laser_scanid_63
           Unreliable: false
@@ -667,15 +669,15 @@ Visualization Manager:
           Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 62.07567596435547
+          Max Intensity: 62.075676
           Min Color: 0; 0; 0
-          Min Intensity: -0.007054195739328861
+          Min Intensity: -0.00705419574
           Name: removPoints
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.20000000298023224
+          Size (m): 0.200000003
           Style: Flat Squares
           Topic: /laser_remove_points
           Unreliable: false
@@ -685,7 +687,7 @@ Visualization Manager:
       Enabled: false
       Name: scan
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /kitti/image
       Max Value: 1
       Median window: 5
@@ -695,7 +697,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -719,8 +721,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 11.57116413116455
-        Min Value: -2.257206678390503
+        Max Value: 11.5711641
+        Min Value: -2.25720668
         Value: true
       Axis: Z
       Channel Name: rgb
@@ -739,7 +741,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.20000000298023224
+      Size (m): 0.200000003
       Style: Flat Squares
       Topic: /laser_cloud_planespoints
       Unreliable: false
@@ -777,7 +779,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.20000000298023224
+      Size (m): 0.200000003
       Style: Flat Squares
       Topic: /laser_cloud_curmatchedppoints
       Unreliable: false
@@ -807,7 +809,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.20000000298023224
+      Size (m): 0.200000003
       Style: Flat Squares
       Topic: /laser_cloud_curplanespoints
       Unreliable: false
@@ -837,7 +839,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.00999999978
       Style: Flat Squares
       Topic: /laser_cloud_ngpoints
       Unreliable: false
@@ -848,12 +850,12 @@ Visualization Manager:
       Buffer Length: 1
       Class: rviz/Path
       Color: 25; 25; 255
-      Enabled: false
-      Head Diameter: 0.30000001192092896
-      Head Length: 0.20000000298023224
-      Length: 0.30000001192092896
+      Enabled: true
+      Head Diameter: 0.300000012
+      Head Length: 0.200000003
+      Length: 0.300000012
       Line Style: Lines
-      Line Width: 0.029999999329447746
+      Line Width: 0.0299999993
       Name: Path
       Offset:
         X: 0
@@ -861,12 +863,12 @@ Visualization Manager:
         Z: 0
       Pose Color: 255; 85; 255
       Pose Style: None
-      Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
-      Shaft Length: 0.10000000149011612
+      Radius: 0.0299999993
+      Shaft Diameter: 0.100000001
+      Shaft Length: 0.100000001
       Topic: /aft_loopclosure_path
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /visualization_keyframe_marker
@@ -885,12 +887,12 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 22
+      Max Intensity: 763
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -898,24 +900,24 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.20000000298023224
+      Size (m): 0.200000003
       Style: Flat Squares
       Topic: /laser_cloud_matchedpoints1
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 6.0226006507873535
-        Min Value: -2.039072036743164
+        Max Value: 6.02260065
+        Min Value: -2.03907204
         Value: true
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: FlatColor
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -928,7 +930,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.30000001192092896
+      Size (m): 0.200000003
       Style: Flat Squares
       Topic: /laser_cloud_matchedpoints2
       Unreliable: false
@@ -1033,6 +1035,126 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: -999999
+      Min Color: 0; 0; 0
+      Min Intensity: 999999
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.200000003
+      Style: Flat Squares
+      Topic: /velodyne_cloud_registered
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 29
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.200000003
+      Style: Flat Squares
+      Topic: /velodyne_cloud_registered_bef
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 10
+      Min Color: 0; 0; 0
+      Min Intensity: 10
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.200000003
+      Style: Flat Squares
+      Topic: /laser_cloud_each_frame
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: ""
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: ""
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.200000003
+      Style: Flat Squares
+      Topic: /laser_cloud_target_map
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -1048,10 +1170,7 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
-      Theta std deviation: 0.2617993950843811
       Topic: /initialpose
-      X std deviation: 0.5
-      Y std deviation: 0.5
     - Class: rviz/SetGoal
       Topic: /move_base_simple/goal
     - Class: rviz/PublishPoint
@@ -1061,35 +1180,35 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 710.2141723632812
+      Distance: 626.770386
       Enable Stereo Rendering:
-        Stereo Eye Separation: 0.05999999865889549
+        Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.6757969856262207
-        Y: 1.082263708114624
-        Z: -2.3097984790802
+        X: 0
+        Y: 0
+        Z: 0
       Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05000000074505806
+      Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
-      Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
-      Target Frame: body
+      Near Clip Distance: 0.00999999978
+      Pitch: 1.56979632
+      Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 3.063192129135132
+      Yaw: 3.13540769
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1002
+  Height: 1056
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016a0000034cfc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000028c000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006501000002cf000000ba0000001600ffffff000000010000010f00000396fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000396000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000006100000034c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000396fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000002800000396000000d600fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d00610067006500000002cf000000ba0000001600ffffff000000010000021d00000396fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002800000396000000ac00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000002fb0000000800540069006d006501000000000000073f0000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000005cf0000039600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -1098,6 +1217,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1920
-  X: 0
-  Y: 0
+  Width: 1855
+  X: 65
+  Y: 24

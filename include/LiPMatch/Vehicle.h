@@ -24,7 +24,9 @@ namespace LiPMatch_ns {
             {
                 Eigen::Vector4f centroid;
                 pcl::compute3DCentroid(*VehiclePointCloudPtr, centroid);
-                v3center(0) = centroid(0); v3center(1) = centroid(1); v3center(2) = centroid(2);
+                v3center(0) = centroid(0); v3center(1) = centroid(1);
+//                v3center(2) = 0.0;
+                v3center(2) = centroid(2);
                 pcl::PCA< pcl::PointXYZI > pca;
                 pca.setInputCloud(VehiclePointCloudPtr);
                 eigenVal = pca.getEigenValues();

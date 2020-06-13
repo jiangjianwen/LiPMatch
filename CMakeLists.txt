@@ -75,11 +75,25 @@ target_link_libraries(alaserMapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES
 		LiPMatch
 		)
 
+add_executable(loopclosureFast src/loopclosureFast.cpp)
+target_link_libraries(loopclosureFast ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} LiPMatch)
+
+
+add_executable(makeTargetMap src/makeTargetMap.cpp
+                             src/makeTargetmapcore.cpp)
+target_link_libraries(makeTargetMap ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS})
+
+
+add_executable(localizationFast src/localizationFast.cpp)
+target_link_libraries(localizationFast ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} LiPMatch)
+
+
 message(STATUS "Without OpenMP")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMAX_OPENMP_NUM_THREADS=1 -DOPENMP_NUM_THREADS=1")
 
 
-add_executable(kittiHelper src/kittiHelper.cpp)
+add_executable(kittiHelper src/kittiHelper.cpp
+		                   src/RangenetAPI.cpp)
 target_link_libraries(kittiHelper ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
 

@@ -35,6 +35,17 @@
 #include <string>
 #include <sys/time.h>
 
+#include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
+#include <pcl/recognition/cg/geometric_consistency.h>  //几何一致性
+#include <pcl/registration/transformation_estimation_svd.h>
+#include <pcl/registration/transformation_estimation_svd_scale.h>
+#include <pcl/registration/transformation_estimation_dual_quaternion.h>
+#include <pcl/registration/transformation_estimation_lm.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/correspondence_estimation.h>
+
+
 #	define	TIMEVAL_NUMS			reinterpret_cast<struct timeval*>(largeInts)
 
 namespace LiPMatch_ns {
@@ -76,9 +87,7 @@ namespace LiPMatch_ns {
         }
     }
 
-
-
-struct TThreadHandle
+    struct TThreadHandle
     {
         std::shared_ptr<std::thread> m_thread;
 
@@ -112,30 +121,40 @@ struct TThreadHandle
             threadHandle.m_thread->join();
     }
 
-    typedef struct
+    class m_keyframe
     {
-        /*new add*/
+    public:
+        m_keyframe() : structurelaserCloud(new pcl::PointCloud<pcl::PointXYZI>()), vehiclelaserCloud(new pcl::PointCloud<pcl::PointXYZI>()),
+                       naturelaserCloud(new pcl::PointCloud<pcl::PointXYZI>()), objectlaserCloud(new pcl::PointCloud<pcl::PointXYZI>()),
+                       orilaserCloud(new pcl::PointCloud<pcl::PointXYZI>()), surflaserCloud(new pcl::PointCloud<pcl::PointXYZI>()),
+                       linelaserCloud(new pcl::PointCloud<pcl::PointXYZI>()), g_laserCloud(new pcl::PointCloud<pcl::PointXYZI>())
+//                       same_laserCloud(new pcl::PointCloud<pcl::PointXYZI>())
+        {
+            framecount = 0;
+            m_ending_frame_idx = 0;
+            travel_length = 0.0;
+        }
+
         pcl::PointCloud<pcl::PointXYZI>::Ptr structurelaserCloud;
         pcl::PointCloud<pcl::PointXYZI>::Ptr vehiclelaserCloud;
         pcl::PointCloud<pcl::PointXYZI>::Ptr naturelaserCloud;
         pcl::PointCloud<pcl::PointXYZI>::Ptr objectlaserCloud;
-        /*new add*/
-
         pcl::PointCloud<pcl::PointXYZI>::Ptr orilaserCloud;
-
         pcl::PointCloud<pcl::PointXYZI>::Ptr surflaserCloud;
         pcl::PointCloud<pcl::PointXYZI>::Ptr linelaserCloud;
-        pcl::PointCloud<pcl::PointXYZI> g_laserCloud;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr g_laserCloud;
+
+//        pcl::PointCloud<pcl::PointXYZI>::Ptr same_laserCloud;
 
         int framecount = 0;
         int m_ending_frame_idx = 0;
+        double travel_length = 0.0;
+
+
         Eigen::Map<Eigen::Quaterniond> m_pose_q = Eigen::Map<Eigen::Quaterniond>( parameters1 );
         Eigen::Map<Eigen::Vector3d>    m_pose_t = Eigen::Map<Eigen::Vector3d>( parameters1 + 4 );
 
-        double travel_length = 0.0;
-
-    } m_keyframe;
-
+    };
 
 
     template<typename DATA_TYPE>
@@ -155,6 +174,8 @@ struct TThreadHandle
         pcl::PointCloud<pcl::PointXYZI> m_accumulated_ng_pc;
 
         pcl::PointCloud<pcl::PointXYZI> m_accumulated_g_pc;
+        pcl::PointCloud<pcl::PointXYZI> m_accumulated_structure_pc;
+        pcl::PointCloud<pcl::PointXYZI> m_accumulated_vehicle_pc;
 
         unsigned int m_accumulate_frames = 0;
         int m_ending_frame_idx;
@@ -184,7 +205,6 @@ struct TThreadHandle
   {
    public:
 
-      ///////////////////////////////////////////
 
       struct Pose3d {
           Eigen::Matrix<double, 3, 1> p;
@@ -333,8 +353,8 @@ struct TThreadHandle
                   Pose3d pose_opm = pose3d_map_opm.find( id )->second;
                   auto pc_in =map_idx_pc.find(id)->second.makeShared();
 
-                      m_down_sample_filter.setInputCloud( pc_in );
-                      m_down_sample_filter.filter( *pc_in );
+//                      m_down_sample_filter.setInputCloud( pc_in );
+//                      m_down_sample_filter.filter( *pc_in );
 
                   pts_vec_ori = pcl_pts_to_eigen_pts< float, pcl::PointXYZI >( pc_in ) ;
 
@@ -367,8 +387,8 @@ struct TThreadHandle
                                             pose_opm.q.toRotationMatrix(), pose_opm.p );
                   pcl::PointCloud< pcl::PointXYZI > pcl_pts = eigen_pt_to_pcl_pointcloud< pcl::PointXYZI >( pts_vec_opm );
 
-                  m_down_sample_filter.setInputCloud( pcl_pts.makeShared() );
-                  m_down_sample_filter.filter( pcl_pts );
+//                  m_down_sample_filter.setInputCloud( pcl_pts.makeShared() );
+//                  m_down_sample_filter.filter( pcl_pts );
                   m_pts_aft_refind += pcl_pts;
                   //m_down_sample_filter.setInputCloud( m_pts_aft_refind.makeShared() );
                   //m_down_sample_filter.filter( m_pts_aft_refind );
@@ -438,10 +458,11 @@ struct TThreadHandle
             const Eigen::Matrix<double, 6, 6> sqrt_information_;
         };
 
-        bool OutputPoses(const std::string &filename, const MapOfPoses &poses) {
-            std::fstream outfile;
-            outfile.open(filename.c_str(), std::istream::out);
-            if (!outfile) {
+      bool OutputPoses(const std::string &filename, const MapOfPoses &poses) {
+
+           ofstream outfile(filename.c_str(), ios::trunc);
+
+           if (!outfile) {
                 LOG(ERROR) << "Error opening the file: " << filename;
                 return false;
             }
@@ -449,14 +470,22 @@ struct TThreadHandle
                     Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
                  const_iterator poses_iter = poses.begin();
                  poses_iter != poses.end(); ++poses_iter) {
+
                 const std::map<int, Pose3d, std::less<int>,
                         Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
                 value_type &pair = *poses_iter;
                 outfile << pair.first << " " << pair.second.p.transpose() << " "
                         << pair.second.q.x() << " " << pair.second.q.y() << " "
                         << pair.second.q.z() << " " << pair.second.q.w() << '\n';
+
+                std::cout<< pair.first << " " << pair.second.p.transpose() << " "
+                         << pair.second.q.x() << " " << pair.second.q.y() << " "
+                         << pair.second.q.z() << " " << pair.second.q.w() << '\n';
             }
-            return true;
+
+          outfile.close();
+
+          return true;
         }
 
         void BuildOptimizationProblem(const VectorOfConstraints &constraints,
@@ -530,7 +559,11 @@ struct TThreadHandle
 
     LiPMatch();
 
-    ~LiPMatch();
+
+        void transformationfromMatches(std::vector<Eigen::Vector3d> m1, std::vector<Eigen::Vector3d> m2, Eigen::Matrix<float, 4, 4> *transform, Eigen::Vector3d & trans);
+
+
+          ~LiPMatch();
 
     std::vector<Plane> vPlanes;
 
@@ -538,8 +571,13 @@ struct TThreadHandle
 
     std::vector<Pole> vPoles;
 
+      std::vector<Plane> mapPlanes;
 
-    SubgraphMatcher matcher;
+      std::vector<Vehicle> mapVehicles;
+
+      std::vector<Pole> mapPoles;
+
+      SubgraphMatcher matcher;
 
     std::vector<double> v_icp;
 
@@ -559,7 +597,12 @@ struct TThreadHandle
 
     pcl::PointCloud< pcl::PointXYZI > refined_pt_bef;
 
+    pcl::PointCloud<pcl::PointXYZI> same_laserCloud;
 
+    pcl::PointCloud<pcl::PointXYZI> same_laserCloud2;
+
+
+    void genGlobalMap();
 
     void run();
 
@@ -569,6 +612,8 @@ struct TThreadHandle
 
     bool stop_LiPMatch();
 
+    void getGlobalPlaneMap();
+
     std::vector<m_keyframe> frameQueue;
 
     std::vector<std::shared_ptr<Maps_keyframe<float>>> keyframe_vec;
@@ -577,6 +622,7 @@ struct TThreadHandle
 
     //原始点云坐标
     pcl::PointCloud<pcl::PointXYZI> laserCloudOri;
+
     pcl::PointCloud<pcl::PointXYZI> coeffSel;
 
     std::map<size_t,size_t> loop_closure_matchedid;
@@ -584,19 +630,61 @@ struct TThreadHandle
     pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m1;
     pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m2;
 
+    pcl::PointCloud<pcl::PointXYZRGBA> laserCloudOri_m2_1;
 
     pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp1;
+
     pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp2;
 
     pcl::KdTreeFLANN< pcl::PointXYZI > m_kdtree_kfs;
 
     pcl::PointCloud<pcl::PointXYZI> all_kfs_pose;
 
+    pcl::PointCloud<pcl::PointXYZI> mapToShow;
+
+    pcl::PointCloud<pcl::PointXYZI> localMap2;
+
+    int lmapsize = 0;
+
+    float swdif_height = 0.0;
+    float swdif_height2 = 0.0;
+    float swdif_normal = 0.0;
+    float swrel_dist_centers = 0.0;
+    float swal = 0.0;
+    float swea = 0.0;
+    int ssum = 0;
 
 
-    private:
 
-    void detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount);
+
+  private:
+
+
+
+      /*!Transform the (x,y,z) coordinates of a PCL point into a Eigen::Vector3f.*/
+      template<class pointPCL>
+      Eigen::Vector3f getVector3fromPointXYZ(pointPCL &pt)
+      {
+          return Eigen::Vector3f(pt.x,pt.y,pt.z);
+      }
+
+      void mergePlanes(Plane &updatePlane, Plane &discardPlane);
+
+      void mergePlanes2(Plane &updatePlane, Plane &discardPlane);
+
+      void detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount);
+
+      bool arePlanesNearby(Plane &plane1, Plane &plane2, const float distThreshold);
+
+      bool areSamePlane(Plane &plane1, Plane &plane2, const float &cosAngleThreshold, const float &distThreshold, const float &proxThreshold);
+
+      bool areSameVehicle(Vehicle &vehicle1, Vehicle &vehicle2, const float &distThreshold);
+
+      bool areSamePole(Pole &pole1, Pole &pole2, const float &distThreshold);
+
+      void mergeVehicles(Vehicle &updateVehicle, Vehicle &discardVehicle);
+
+      void mergePoles(Pole &updatePole, Pole &discardPole);
 
 
     TThreadHandle LiPMatch_hd;
