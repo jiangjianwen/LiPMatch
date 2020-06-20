@@ -15,14 +15,6 @@ bool SubgraphMatcher::evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2) {
     double rel_areas = plane1.areaHull / plane2.areaHull;
     double rel_elong = plane1.elongation / plane2.elongation;
 
-    Eigen::Vector3f ev1 = plane1.eigenval;
-    Eigen::Vector3f ev2 = plane2.eigenval;
-
-    float sum1 = sqrt(ev1[1] / ev1[2]);
-    float sum2 = sqrt(ev2[1] / ev2[2]);
-
-    double rel_elong2 = sum1 / sum2;
-
 //    float area_threshold = 2.0;
     float area_threshold_inv = 1.0/area_threshold;
 
@@ -40,31 +32,37 @@ bool SubgraphMatcher::evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2) {
         return false;
     }
 
-    // if (rel_elong2 < elongation_threshold_inv2 || rel_elong2 > elongation_threshold2) {
-    //     return false;
-    // }
 
     return true;
 }
+
+
+
+
+
+bool SubgraphMatcher::evalUnaryConstraintsVehicleWithoutP(Vehicle &vehicle1, Vehicle &vehicle2) {
+
+    float elongation_thresholdh = 1.1;
+    float elongation_threshold_inv = 1.0/elongation_thresholdh;
+
+    double rel_elong = vehicle1.elongation / vehicle2.elongation;
+
+    if (rel_elong < elongation_threshold_inv || rel_elong > elongation_thresholdh) {
+        return false;
+    }
+
+    return true;
+}
+
+
+
+
 
 
 bool SubgraphMatcher::evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &vehicle2) {
 
     float dist_threshold_inv = 1/dist_thresholdvpv;
 
-
-    float evdiff = 0;
-    evdiff += fabs(vehicle1.eigenVal(0) - vehicle2.eigenVal(0));
-    evdiff += fabs(vehicle1.eigenVal(1) - vehicle2.eigenVal(1));
-    evdiff += fabs(vehicle1.eigenVal(2) - vehicle2.eigenVal(2));
-
-    // if( evdiff > 250)
-    // {
-    //     return false;
-    // }
-
-//    std::cout<<"----------"<<std::endl;
-//    std::cout<<"c_kvc.size() "<<c_kvc.size()<<std::endl;
     for (size_t i = 0 ; i < c_kvc.size() ; ++i)
     {
         float disk = c_kvn[i].dot(vehicle1.v3center - c_kvc[i]);
@@ -74,35 +72,29 @@ bool SubgraphMatcher::evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &ve
 
         if (radio > dist_thresholdvpv || radio < dist_threshold_inv)
             return false;
-
-//        std::cout<<"radio "<<radio<<std::endl;
-
-//        if (fabs(disk - disl) > 1.0)
-//            return false;
     }
 
-//    std::cout<<"evdiff "<<evdiff<<std::endl;
+    return true;
+}
 
+bool SubgraphMatcher::evalUnaryConstraintsPoleWithoutP(Pole &pole1, Pole &pole2) {
+
+    float elongation_thresholdh = 1.2;
+    float elongation_threshold_inv = 1.0/elongation_thresholdh;
+
+    double rel_elong = pole1.elongation / pole2.elongation;
+
+    if (rel_elong < elongation_threshold_inv || rel_elong > elongation_thresholdh) {
+        return false;
+    }
 
     return true;
 }
 
 
-
-
 bool SubgraphMatcher::evalUnaryConstraintsPole(Pole &pole1, Pole &pole2) {
 
     float dist_threshold_inv = 1/dist_thresholdvp;
-
-    float evdiff = 0;
-    evdiff += fabs(pole1.eigenVal(0) - pole2.eigenVal(0));
-    evdiff += fabs(pole1.eigenVal(1) - pole2.eigenVal(1));
-    evdiff += fabs(pole1.eigenVal(2) - pole2.eigenVal(2));
-
-    // if( evdiff > 100)
-    // {
-    //     return false;
-    // }
 
     for (size_t i = 0 ; i < c_kvc.size() ; ++i)
     {
@@ -113,9 +105,6 @@ bool SubgraphMatcher::evalUnaryConstraintsPole(Pole &pole1, Pole &pole2) {
 
         if (radio > dist_thresholdvp || radio < dist_threshold_inv)
             return false;
-
-//        if (fabs(disk - disl) > 1.00)
-//            return false;
     }
 
     if (v_kvc.size() > 0)
@@ -527,7 +516,7 @@ void SubgraphMatcher::exploreSubgraphTreeR(set<unsigned> &sourcePlanes, set<unsi
         sourcePlanes.erase(it1);
     } // End while
 
-    if (matched.size() > 2) {
+    if (matched.size() > 1) {
 //        std::cout << "matched.size() " << matched.size() << std::endl;
 
         allMatchGroups.push_back(matched);
@@ -775,7 +764,7 @@ void SubgraphMatcher::exploreSubgraphTreeRVehicleWithoutP(set<unsigned> &sourceV
         winnerMatchVehicle = matched;
     }
 
-    if (matched.size() > 6 || withoutplanevehilceok)
+    if (matched.size() > 7 || withoutplanevehilceok)
     {
         withoutplanevehilceok = true;
         return;
@@ -827,7 +816,7 @@ void SubgraphMatcher::exploreSubgraphTreeRVehicleWithoutP(set<unsigned> &sourceV
         winnerMatchVehicle = matched;
     }
 
-    if (matched.size() > 6)
+    if (matched.size() > 7)
     {
         withoutplanevehilceok = true;
         return;
@@ -1201,10 +1190,10 @@ std::map<unsigned,unsigned> SubgraphMatcher::compareSubgraphsVehicleWithoutPlane
     for(set<unsigned>::iterator it1 = sourceVehicles.begin(); it1 != sourceVehicles.end(); it1++) {
         for (set<unsigned>::iterator it2 = targetVehicles.begin(); it2 != targetVehicles.end(); it2++) {
 
-            hashUnaryConstraints[*it1][*it2] = 1;
+            // hashUnaryConstraints[*it1][*it2] = 1;
 
-            // hashUnaryConstraints[*it1][*it2] = (evalUnaryConstraintsVehicle(subgraphSrc->vVehicles[*it1],
-            //                                                                 subgraphTrg->vVehicles[*it2]) ? 1 : 0);
+            hashUnaryConstraints[*it1][*it2] = (evalUnaryConstraintsVehicleWithoutP(subgraphSrc->vVehicles[*it1],
+                                                                            subgraphTrg->vVehicles[*it2]) ? 1 : 0);
         }
 //        for (set<unsigned>::iterator it2 = targetPlanes.begin(); it2 != targetPlanes.end(); it2++)
 //            std::cout<<int(hashUnaryConstraints[*it1][*it2])<<" ";
@@ -1308,10 +1297,10 @@ std::map<unsigned,unsigned> SubgraphMatcher::compareSubgraphsPoleWithoutPlaneRef
     for(set<unsigned>::iterator it1 = sourcePoles.begin(); it1 != sourcePoles.end(); it1++) {
         for (set<unsigned>::iterator it2 = targetPoles.begin(); it2 != targetPoles.end(); it2++) {
 
-            hashUnaryConstraints[*it1][*it2] = 1;
+            // hashUnaryConstraints[*it1][*it2] = 1;
 
-            // hashUnaryConstraints[*it1][*it2] = (evalUnaryConstraintsPole(subgraphSrc->vPoles[*it1],
-            //                                                                 subgraphTrg->vPoles[*it2]) ? 1 : 0);
+            hashUnaryConstraints[*it1][*it2] = (evalUnaryConstraintsPoleWithoutP(subgraphSrc->vPoles[*it1],
+                                                                            subgraphTrg->vPoles[*it2]) ? 1 : 0);
         }
 //        for (set<unsigned>::iterator it2 = targetPlanes.begin(); it2 != targetPlanes.end(); it2++)
 //            std::cout<<int(hashUnaryConstraints[*it1][*it2])<<" ";

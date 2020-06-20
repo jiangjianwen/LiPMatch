@@ -69,7 +69,7 @@
 #include "aloam_velodyne/tic_toc.h"
 
 #include "RangenetAPI.hpp"
-
+#include <tools.h>
 
 
 #define N  999
@@ -179,8 +179,8 @@ visualization_msgs::Marker line_list;
 
 LiPMatch lipmatch;
 
-std::list<m_keyframe> m_keyframe_of_updating_list;
-std::list<m_keyframe> m_keyframe_need_precession_list;
+std::list<tools::m_keyframe> m_keyframe_of_updating_list;
+std::list<tools::m_keyframe> m_keyframe_need_precession_list;
 
 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr tosave(new pcl::PointCloud<pcl::PointXYZRGBA>());
 
@@ -1374,7 +1374,7 @@ void process()
 //                pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/test_pcd.pcd", *tosave); //将点云保存到PCD文件中
 
 
-                m_keyframe tk1;
+                tools::m_keyframe tk1;
                 m_keyframe_of_updating_list.push_back(tk1);
             }
 
@@ -1592,7 +1592,7 @@ int main(int argc, char **argv)
 
     ngKeyframelaserCloud.reset(new pcl::PointCloud<PointType>());
 
-    m_keyframe tk;
+    tools::m_keyframe tk;
     m_keyframe_of_updating_list.push_back(tk);
 
     std::thread mapping_process{process};

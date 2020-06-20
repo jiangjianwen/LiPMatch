@@ -17,7 +17,7 @@ namespace LiPMatch_ns {
         class Vehicle
         {
         public:
-            Vehicle() : matched(false), VehiclePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>)
+            Vehicle() : VehiclePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>)
             {}
 
             void calcCenterAndElongation()
@@ -30,19 +30,25 @@ namespace LiPMatch_ns {
                 pcl::PCA< pcl::PointXYZI > pca;
                 pca.setInputCloud(VehiclePointCloudPtr);
                 eigenVal = pca.getEigenValues();
+
+                elongation = sqrt(eigenVal[0] / eigenVal[1]);
+
             }
 
             unsigned id;
             unsigned keyFrameId;
-            std::map<unsigned,unsigned> neighborVehicles;
+
+            float elongation;
 
             Eigen::Vector3f v3center;
             Eigen::Vector3f eigenVal;
-            bool matched;
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr VehiclePointCloudPtr;
         };
-     } // End of namespaces
+
+
+
+} // End of namespaces
 
 
 

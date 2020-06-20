@@ -1,39 +1,3 @@
-// This is an advanced implementation of the algorithm described in the following paper:
-//   J. Zhang and S. Singh. LOAM: Lidar Odometry and Mapping in Real-time.
-//     Robotics: Science and Systems Conference (RSS). Berkeley, CA, July 2014.
-
-// Modifier: Tong Qin               qintonguav@gmail.com
-// 	         Shaozu Cao 		    saozu.cao@connect.ust.hk
-
-
-// Copyright 2013, Ji Zhang, Carnegie Mellon University
-// Further contributions copyright (c) 2016, Southwest Research Institute
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// 1. Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-// 3. Neither the name of the copyright holder nor the names of its
-//    contributors may be used to endorse or promote products derived from this
-//    software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
 #include <makeTargetmapcore.h>
 #include <math.h>
 #include <vector>
@@ -54,7 +18,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-#include <tf/tf.h>  // tf::Matrix3x3, tf::createQuaternionMsgFromRollPitchYaw, tf::Quaternion
+#include <tf/tf.h> 
 #include <eigen3/Eigen/Dense>
 #include <ceres/ceres.h>
 #include <mutex>
@@ -72,6 +36,8 @@
 
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
+
+#include <tools.h>
 
 using namespace std;
 using namespace Makemap_ns;
@@ -102,8 +68,8 @@ nav_msgs::Path laserAfterMappedPath;
 
 Makemap lipmatch;
 
-std::list<m_keyframe> m_keyframe_of_updating_list;
-std::list<m_keyframe> m_keyframe_need_precession_list;
+std::list<tools::m_keyframe> m_keyframe_of_updating_list;
+std::list<tools::m_keyframe> m_keyframe_need_precession_list;
 
 std::vector<float> read_lidar_data(const std::string lidar_data_path)
 {
@@ -135,7 +101,8 @@ void process()
 {
     // std::ifstream timestamp_file("/home/jjwen/data/KITTI/odometry/05.txt", std::ifstream::in);
 
-    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05.txt", std::ifstream::in);
+    // std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05.txt", std::ifstream::in);
+    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00.txt", std::ifstream::in);
 
 
     std::string line;
@@ -145,7 +112,8 @@ void process()
 
 //    ros::Rate r(1.0);
 
-    while (std::getline(timestamp_file, line) && ros::ok())
+    // while (std::getline(timestamp_file, line) && ros::ok())
+    while (std::getline(timestamp_file, line) && ros::ok() && line_num < 3300)
     {
         std::vector<double> vdata;
         std::stringstream pose_stream(line);
@@ -175,9 +143,12 @@ void process()
 
         // string binpath = "/home/jjwen/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
 
-        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
+        // string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
+        // line_num++;
 
         line_num++;
+        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/semantic/"+to_string(line_num)+".bin";
+
 
 
 
@@ -266,7 +237,7 @@ void process()
         //25 26
         if ( m_keyframe_of_updating_list.back().travel_length >= 25.0 )
         {
-            m_keyframe tk1;
+            tools::m_keyframe tk1;
             m_keyframe_of_updating_list.push_back(tk1);
         }
 
@@ -337,7 +308,7 @@ void process()
     }
 
     lipmatch.genPlaneMap();
-        lipmatch.genCylinderMap();
+    lipmatch.genCylinderMap();
     lipmatch.genVehicleMap();
 
 
@@ -371,7 +342,7 @@ int main(int argc, char **argv)
 
     pubEachFrameLaserCloud = nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_each_frame", 300);
 
-    m_keyframe tk;
+    tools::m_keyframe tk;
 
     m_keyframe_of_updating_list.push_back(tk);
 

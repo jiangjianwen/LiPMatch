@@ -1,0 +1,24 @@
+LiPMatch: {
+
+   height_threshold: 1.25,
+
+   angle_threshold: 1.25,
+
+   dist_threshold: 1.25,
+
+   area_threshold: 1.5,
+
+   elongation_threshold: 1.5,
+
+   elongation_threshold2: 1.5,
+
+   dist_thresholdvpv: 1.25,
+
+   dist_thresholdvp: 1.20,
+    
+   dist_thresholdp: 1.03,
+   
+   dist_thresholdv: 1.07
+
+}
+

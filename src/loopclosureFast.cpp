@@ -1,39 +1,3 @@
-// This is an advanced implementation of the algorithm described in the following paper:
-//   J. Zhang and S. Singh. LOAM: Lidar Odometry and Mapping in Real-time.
-//     Robotics: Science and Systems Conference (RSS). Berkeley, CA, July 2014.
-
-// Modifier: Tong Qin               qintonguav@gmail.com
-// 	         Shaozu Cao 		    saozu.cao@connect.ust.hk
-
-
-// Copyright 2013, Ji Zhang, Carnegie Mellon University
-// Further contributions copyright (c) 2016, Southwest Research Institute
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// 1. Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-// 3. Neither the name of the copyright holder nor the names of its
-//    contributors may be used to endorse or promote products derived from this
-//    software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
 #include <LiPMatch.h>
 #include <math.h>
 #include <vector>
@@ -54,7 +18,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-#include <tf/tf.h>  // tf::Matrix3x3, tf::createQuaternionMsgFromRollPitchYaw, tf::Quaternion
+#include <tf/tf.h>  
 #include <eigen3/Eigen/Dense>
 #include <ceres/ceres.h>
 #include <mutex>
@@ -125,10 +89,10 @@ visualization_msgs::Marker line_list;
 
 visualization_msgs::Marker line_list2;
 
-LiPMatch lipmatch;
+// LiPMatch lipmatch;
 
-std::list<m_keyframe> m_keyframe_of_updating_list;
-std::list<m_keyframe> m_keyframe_need_precession_list;
+std::list<tools::m_keyframe> m_keyframe_of_updating_list;
+std::list<tools::m_keyframe> m_keyframe_need_precession_list;
 
 std::vector<float> read_lidar_data(const std::string lidar_data_path)
 {
@@ -892,7 +856,6 @@ void loop_closure_pub_optimzed_path( const LiPMatch::MapOfPoses &pose3d_aft_loop
 //        r1.sleep();
 //    }
 //
-////    lipmatch.genGlobalMap();
 ////    loop_closure_pub_optimzed_path(lipmatch.optimized_pose3d_map);
 //
 //    sensor_msgs::PointCloud2 matchedCloudOutMsg4;
@@ -937,7 +900,8 @@ void loop_closure_pub_optimzed_path( const LiPMatch::MapOfPoses &pose3d_aft_loop
 // loop closure
 void process()
 {
-    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/pose.txt", std::ifstream::in);
+
+    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00.txt", std::ifstream::in);
 
     Eigen::Matrix3d R_transform;
     R_transform << 0, 0, 1, -1, 0, 0, 0, -1, 0;
@@ -961,9 +925,11 @@ void process()
         pcl::PointCloud<pcl::PointXYZI> laserCloudIn;
 
 
-        line_num++;
 
         string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/semantic/"+to_string(line_num)+".bin";
+
+                line_num++;
+
 
 //        std::fstream output(binpath.c_str(), std::ios::out | std::ios::binary);
 //        output.seekg(0, std::ios::beg);
@@ -1113,7 +1079,7 @@ void process()
             m_keyframe_need_precession_list.push_back( m_keyframe_of_updating_list.front() );
             m_keyframe_of_updating_list.pop_front();
 
-            lipmatch.frameQueue.push_back(m_keyframe_need_precession_list.back());
+            // lipmatch.frameQueue.push_back(m_keyframe_need_precession_list.back());
 
             geometry_msgs::Point p;
             p.x = t_w_curr.x();
@@ -1127,15 +1093,15 @@ void process()
         //25 26
         if ( m_keyframe_of_updating_list.back().travel_length >= 25.0 )
         {
-            m_keyframe tk1;
+            tools::m_keyframe tk1;
             m_keyframe_of_updating_list.push_back(tk1);
         }
 
-        sensor_msgs::PointCloud2 matchedCloudOutMsg1;
-        pcl::toROSMsg(lipmatch.laserCloudOri_mp1, matchedCloudOutMsg1);
-        matchedCloudOutMsg1.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-        matchedCloudOutMsg1.header.frame_id = "/camera_init";
-        pubMatchedPoints1.publish(matchedCloudOutMsg1);
+        // sensor_msgs::PointCloud2 matchedCloudOutMsg1;
+        // pcl::toROSMsg(lipmatch.laserCloudOri_mp1, matchedCloudOutMsg1);
+        // matchedCloudOutMsg1.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        // matchedCloudOutMsg1.header.frame_id = "/camera_init";
+        // pubMatchedPoints1.publish(matchedCloudOutMsg1);
 
 //        sensor_msgs::PointCloud2 matchedCloudOutMsg2;
 //        pcl::toROSMsg(lipmatch.laserCloudOri_m2_1, matchedCloudOutMsg2);
@@ -1143,11 +1109,11 @@ void process()
 //        matchedCloudOutMsg2.header.frame_id = "/camera_init";
 //        pubMatchedPoints2.publish(matchedCloudOutMsg2);
 
-        sensor_msgs::PointCloud2 matchedCloudOutMsg2;
-        pcl::toROSMsg(lipmatch.laserCloudOri_m2, matchedCloudOutMsg2);
-        matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-        matchedCloudOutMsg2.header.frame_id = "/camera_init";
-        pubMatchedPoints2.publish(matchedCloudOutMsg2);
+        // sensor_msgs::PointCloud2 matchedCloudOutMsg2;
+        // pcl::toROSMsg(lipmatch.laserCloudOri_m2, matchedCloudOutMsg2);
+        // matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        // matchedCloudOutMsg2.header.frame_id = "/camera_init";
+        // pubMatchedPoints2.publish(matchedCloudOutMsg2);
 
         sensor_msgs::PointCloud2 eachPointCloudOutMsg;
         pcl::toROSMsg(*vehicle_points, eachPointCloudOutMsg);
@@ -1175,14 +1141,14 @@ void process()
         line_list.color.g = 1.0f;
         line_list.color.a = 1.0;
 
-        for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
-            geometry_msgs::Point p1 = points.points[it->first];
-            geometry_msgs::Point p2 = points.points[it->second];
-            line_list.points.push_back(p1);
-            line_list.points.push_back(p2);
-        }
+        // for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
+        //     geometry_msgs::Point p1 = points.points[it->first];
+        //     geometry_msgs::Point p2 = points.points[it->second];
+        //     line_list.points.push_back(p1);
+        //     line_list.points.push_back(p2);
+        // }
 
-        marker_keyframe_pub.publish(line_list);
+        // marker_keyframe_pub.publish(line_list);
 
 //        sensor_msgs::PointCloud2 laserCloudFullRes3;
 //        pcl::toROSMsg(lipmatch.refined_pt, laserCloudFullRes3);
@@ -1193,17 +1159,17 @@ void process()
         // loop_closure_pub_optimzed_path(lipmatch.optimized_pose3d_map);
 
 
-        sensor_msgs::PointCloud2 laserCloudFullRes3;
-        pcl::toROSMsg(lipmatch.same_laserCloud, laserCloudFullRes3);
-        laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-        laserCloudFullRes3.header.frame_id = "/camera_init";
-        pubLaserCloudFullRes.publish(laserCloudFullRes3);
+        // sensor_msgs::PointCloud2 laserCloudFullRes3;
+        // pcl::toROSMsg(lipmatch.same_laserCloud, laserCloudFullRes3);
+        // laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        // laserCloudFullRes3.header.frame_id = "/camera_init";
+        // pubLaserCloudFullRes.publish(laserCloudFullRes3);
 
-        sensor_msgs::PointCloud2 laserCloudFullRes4;
-        pcl::toROSMsg(lipmatch.same_laserCloud2, laserCloudFullRes4);
-        laserCloudFullRes4.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-        laserCloudFullRes4.header.frame_id = "/camera_init";
-        pubLaserCloudFullResbef.publish(laserCloudFullRes4);
+        // sensor_msgs::PointCloud2 laserCloudFullRes4;
+        // pcl::toROSMsg(lipmatch.same_laserCloud2, laserCloudFullRes4);
+        // laserCloudFullRes4.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        // laserCloudFullRes4.header.frame_id = "/camera_init";
+        // pubLaserCloudFullResbef.publish(laserCloudFullRes4);
 
         nav_msgs::Odometry odomAftMapped;
         odomAftMapped.header.frame_id = "/camera_init";
@@ -1260,12 +1226,12 @@ void process()
     line_list2.color.g = 1.0f;
     line_list2.color.a = 1.0;
 
-    for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
-        geometry_msgs::Point p1 = points.points[it->first];
-        geometry_msgs::Point p2 = points.points[it->second];
-        line_list2.points.push_back(p1);
-        line_list2.points.push_back(p2);
-    }
+    // for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
+    //     geometry_msgs::Point p1 = points.points[it->first];
+    //     geometry_msgs::Point p2 = points.points[it->second];
+    //     line_list2.points.push_back(p1);
+    //     line_list2.points.push_back(p2);
+    // }
 
     marker_keyframe_pub.publish(line_list2);
 
@@ -1298,7 +1264,7 @@ int main(int argc, char **argv)
     m_pub_laser_aft_loopclosure_path = nh.advertise<nav_msgs::Path>( "/aft_loopclosure_path", 30000 );
 
 
-    m_keyframe tk;
+    tools::m_keyframe tk;
 
     m_keyframe_of_updating_list.push_back(tk);
 

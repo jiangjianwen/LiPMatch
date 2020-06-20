@@ -1,5 +1,5 @@
-#ifndef __PBMAP_PLANE_H
-#define __PBMAP_PLANE_H
+#ifndef __LIPMATCH_PLANE_H
+#define __LIPMATCH_PLANE_H
 
 #include <pcl/point_types.h>
 #include <pcl/common/pca.h>
@@ -32,15 +32,8 @@ namespace LiPMatch_ns {
 
   class Plane
   {
-    // This must be added to any CSerializable derived class:
-
-   public:
-
-      Plane() : elongation(1.0), polygonContourPtr(new pcl::PointCloud<pcl::PointXYZI>),
-                planePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>), InplanePointCloudOriPtr(new pcl::PointCloud<pcl::PointXYZI>)
-                {
-          matched = false;
-                }
+      public:
+      Plane() : elongation(1.0), polygonContourPtr (new pcl::PointCloud<pcl::PointXYZI>), planePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>){}
 
       void calcConvexHull(pcl::PointCloud<pcl::PointXYZI>::Ptr &pointCloud, double plane[4])
       {
@@ -48,40 +41,31 @@ namespace LiPMatch_ns {
           std::vector<std::vector<double>> convexps = cplane.rPlanes();
 
           polygonContourPtr->points.clear();
-          pcl::PointXYZI center; center.x = 0; center.y = 0; center.z = 0;
           for (size_t i = 0 ; i < convexps.size() ; ++i)
           {
               pcl::PointXYZI tmpPoint;
               tmpPoint.x = convexps[i][0];
               tmpPoint.y = convexps[i][1];
               tmpPoint.z = convexps[i][2];
-              center.x += tmpPoint.x;
-              center.y += tmpPoint.y;
-              center.z += tmpPoint.z;
               polygonContourPtr->points.push_back(tmpPoint);
           }
-          center.x /= convexps.size();
-          center.y /= convexps.size();
-          center.z /= convexps.size();
-          v3center[0] = center.x;
-          v3center[1] = center.y;
-          v3center[2] = center.z;
+          
+          Eigen::Vector4f centroid;
+          pcl::compute3DCentroid(*planePointCloudPtr, centroid);
+          v3center(0) = centroid(0); v3center(1) = centroid(1); v3center(2) = centroid(2);
       }
 
       void computeMassCenterAndArea()
       {
           int k0, k1, k2;
 
-          // Find axis with largest normal component and project onto perpendicular plane
           k0 = (fabs (v3normal[0] ) > fabs (v3normal[1])) ? 0  : 1;
           k0 = (fabs (v3normal[k0]) > fabs (v3normal[2])) ? k0 : 2;
           k1 = (k0 + 1) % 3;
           k2 = (k0 + 2) % 3;
 
-          // cos(theta), where theta is the angle between the polygon and the projected plane
           float ct = fabs ( v3normal[k0] );
           float AreaX2 = 0.0;
-//          Eigen::Vector3f massCenter = Eigen::Vector3f::Zero();
           float p_i[3], p_j[3];
 
           for (unsigned int i = 0; i < polygonContourPtr->points.size (); i++)
@@ -92,131 +76,24 @@ namespace LiPMatch_ns {
               double cross_segment = p_i[k1] * p_j[k2] - p_i[k2] * p_j[k1];
 
               AreaX2 += cross_segment;
-//              massCenter[k1] += (p_i[k1] + p_j[k1]) * cross_segment;
-//              massCenter[k2] += (p_i[k2] + p_j[k2]) * cross_segment;
           }
           areaHull = fabs (AreaX2) / (2 * ct);
-
-//          massCenter[k1] /= (3*AreaX2);
-//          massCenter[k2] /= (3*AreaX2);
-//          massCenter[k0] = (v3normal.dot(v3center) - v3normal[k1]*massCenter[k1] - v3normal[k2]*massCenter[k2]) / v3normal[k0];
-
-//          v3center = massCenter;
-//          d = -(v3normal. dot (v3center));
       }
 
       void calcElongationAndPpalDir()
-    {
-        pcl::PCA< pcl::PointXYZ > pca;
-        pcl::PointCloud<pcl::PointXYZ>::Ptr tmpPlanePointCloudPtr(new pcl::PointCloud<pcl::PointXYZ>());
-        pcl::copyPointCloud(*planePointCloudPtr,*tmpPlanePointCloudPtr);
-        //*tmpPlanePointCloudPtr = *planePointCloudPtr;
+      {
+          pcl::PCA< pcl::PointXYZ > pca;
+          pcl::PointCloud<pcl::PointXYZ>::Ptr tmpPlanePointCloudPtr(new pcl::PointCloud<pcl::PointXYZ>());
+          pcl::copyPointCloud(*planePointCloudPtr,*tmpPlanePointCloudPtr);
     
-        pca.setInputCloud(tmpPlanePointCloudPtr);
-        Eigen::VectorXf eigenVal = pca.getEigenValues();
-
-        eigenval = eigenVal;
-
-//  if( eigenVal[0] > 2 * eigenVal[1] )
-        {
-            elongation = sqrt(eigenVal[0] / eigenVal[1]);
-
-        }
-    }
-
-//      void forcePtsLayOnPlane()
-//      {
-//          // The plane equation has the form Ax + By + Cz + D = 0, where the vector N=(A,B,C) is the normal and the constant D can be calculated as D = -N*(PlanePoint) = -N*PlaneCenter
-//          const double D = -(v3normal.dot(v3center));
-//          for(unsigned i = 0; i < planePointCloudPtr->size(); i++)
-//          {
-//              double dist = v3normal[0]*planePointCloudPtr->points[i].x + v3normal[1]*planePointCloudPtr->points[i].y + v3normal[2]*planePointCloudPtr->points[i].z + D;
-//              planePointCloudPtr->points[i].x -= v3normal[0] * dist;
-//              planePointCloudPtr->points[i].y -= v3normal[1] * dist;
-//              planePointCloudPtr->points[i].z -= v3normal[2] * dist;
-//          }
-//          // Do the same with the points defining the convex hull
-//          for(unsigned i = 0; i < polygonContourPtr->size(); i++)
-//          {
-//              double dist = v3normal[0]*polygonContourPtr->points[i].x + v3normal[1]*polygonContourPtr->points[i].y + v3normal[2]*polygonContourPtr->points[i].z + D;
-//              polygonContourPtr->points[i].x -= v3normal[0] * dist;
-//              polygonContourPtr->points[i].y -= v3normal[1] * dist;
-//              polygonContourPtr->points[i].z -= v3normal[2] * dist;
-//          }
-//      }
+          pca.setInputCloud(tmpPlanePointCloudPtr);
+          Eigen::VectorXf eigenVal = pca.getEigenValues();
+          
+          elongation = sqrt(eigenVal[0] / eigenVal[1]);
+      }
 
 
 
-        void forcePtsLayOnPlane()
-        {
-            // The plane equation has the form Ax + By + Cz + D = 0, where the vector N=(A,B,C) is the normal and the constant D can be calculated as D = -N*(PlanePoint) = -N*PlaneCenter
-            const double D = -(v3normal.dot(v3center));
-            pcl::PointXYZI center; center.x = 0; center.y = 0; center.z = 0;
-            for(unsigned i = 0; i < planePointCloudPtr->size(); i++)
-            {
-                double dist = v3normal[0]*planePointCloudPtr->points[i].x + v3normal[1]*planePointCloudPtr->points[i].y + v3normal[2]*planePointCloudPtr->points[i].z + D;
-                planePointCloudPtr->points[i].x -= v3normal[0] * dist;
-                planePointCloudPtr->points[i].y -= v3normal[1] * dist;
-                planePointCloudPtr->points[i].z -= v3normal[2] * dist;
-
-                center.x += planePointCloudPtr->points[i].x;
-                center.y += planePointCloudPtr->points[i].y;
-                center.z += planePointCloudPtr->points[i].z;
-            }
-            center.x /= planePointCloudPtr->size();
-            center.y /= planePointCloudPtr->size();
-            center.z /= planePointCloudPtr->size();
-            v3center[0] = center.x;
-            v3center[1] = center.y;
-            v3center[2] = center.z;
-
-
-            // Do the same with the points defining the convex hull
-            for(unsigned i = 0; i < polygonContourPtr->size(); i++)
-            {
-                double dist = v3normal[0]*polygonContourPtr->points[i].x + v3normal[1]*polygonContourPtr->points[i].y + v3normal[2]*polygonContourPtr->points[i].z + D;
-                polygonContourPtr->points[i].x -= v3normal[0] * dist;
-                polygonContourPtr->points[i].y -= v3normal[1] * dist;
-                polygonContourPtr->points[i].z -= v3normal[2] * dist;
-            }
-        }
-
-
-
-
-
-
-      bool isPlaneNearby(Plane &plane_nearby, const float distThreshold)
-    {
-        float distThres2 = distThreshold * distThreshold;
-
-        // First we check distances between centroids and vertex to accelerate this check
-        if( (v3center - plane_nearby.v3center).squaredNorm() < distThres2 )
-            return true;
-
-        for(unsigned i=1; i < polygonContourPtr->size(); i++)
-            if( (getVector3fromPointXYZ(polygonContourPtr->points[i]) - plane_nearby.v3center).squaredNorm() < distThres2 )
-                return true;
-
-        for(unsigned j=1; j < plane_nearby.polygonContourPtr->size(); j++)
-            if( (v3center - getVector3fromPointXYZ(plane_nearby.polygonContourPtr->points[j]) ).squaredNorm() < distThres2 )
-                return true;
-
-        for(unsigned i=1; i < polygonContourPtr->size(); i++)
-            for(unsigned j=1; j < plane_nearby.polygonContourPtr->size(); j++)
-                if( (diffPoints(polygonContourPtr->points[i], plane_nearby.polygonContourPtr->points[j]) ).squaredNorm() < distThres2 )
-                    return true;
-
-        // a) Between an edge and a vertex
-        // b) Between two edges (imagine two polygons on perpendicular planes)
-        // a) & b)
-        for(unsigned i=1; i < polygonContourPtr->size(); i++)
-            for(unsigned j=1; j < plane_nearby.polygonContourPtr->size(); j++)
-                if(dist3D_Segment_to_Segment2(Segment(polygonContourPtr->points[i],polygonContourPtr->points[i-1]), Segment(plane_nearby.polygonContourPtr->points[j],plane_nearby.polygonContourPtr->points[j-1])) < distThres2)
-                    return true;
-
-        return false;
-    }
 
       template<class pointPCL>
       Eigen::Vector3f getVector3fromPointXYZ(pointPCL &pt)
@@ -313,7 +190,6 @@ namespace LiPMatch_ns {
     */
     unsigned id;
     unsigned keyFrameId;
-    std::map<unsigned,unsigned> neighborPlanes;
 
 
     /**!
@@ -326,16 +202,8 @@ namespace LiPMatch_ns {
     float areaVoxels;
     float areaHull;
 
-    bool matched;
-
-    Eigen::Vector3f eigenval;
-
-
     pcl::PointCloud<pcl::PointXYZI>::Ptr polygonContourPtr;
     pcl::PointCloud<pcl::PointXYZI>::Ptr planePointCloudPtr;
-
-    pcl::PointCloud<pcl::PointXYZI>::Ptr InplanePointCloudOriPtr;
-
 
 
   };

@@ -73,6 +73,8 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
 
+#include <tools.h>
+
 using namespace std;
 using namespace LiPMatch_ns;
 
@@ -116,8 +118,8 @@ visualization_msgs::Marker line_list2;
 
 LiPMatch lipmatch;
 
-std::list<m_keyframe> m_keyframe_of_updating_list;
-std::list<m_keyframe> m_keyframe_need_precession_list;
+std::list<tools::m_keyframe> m_keyframe_of_updating_list;
+std::list<tools::m_keyframe> m_keyframe_need_precession_list;
 
 std::vector<float> read_lidar_data(const std::string lidar_data_path)
 {
@@ -155,14 +157,18 @@ void process()
 
 //    std::ifstream timestamp_file("/home/jjwen/data/KITTI/odometry/00/pose.txt", std::ifstream::in);
 
-    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05.txt", std::ifstream::in);
+    // std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05.txt", std::ifstream::in);
+
+    std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00.txt", std::ifstream::in);
+
 
     std::string line;
     std::size_t line_num = 0;
 
-    ros::Rate r(10.0);
+    ros::Rate r(12.0);
 
-    while (std::getline(timestamp_file, line) && ros::ok())
+    // while (std::getline(timestamp_file, line) && ros::ok())
+    while (std::getline(timestamp_file, line) && ros::ok() && line_num < 3300)
     {
 //        std::stringstream pose_stream(line);
 //        std::string s;
@@ -199,11 +205,11 @@ void process()
 
         pcl::PointCloud<pcl::PointXYZI> laserCloudIn;
 
-
-        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
-
+        // string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
+        // line_num++;
+ 
         line_num++;
-
+        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/semantic/"+to_string(line_num)+".bin";
 
         // read lidar point cloud
         std::vector<float> lidar_data = read_lidar_data(binpath);
@@ -314,7 +320,7 @@ void process()
         points.color.a = 1.0;
 
         //30 32
-        if ( m_keyframe_of_updating_list.front().travel_length >= 60.0 )
+        if ( m_keyframe_of_updating_list.front().travel_length >= 50.0 )
         {
             m_keyframe_of_updating_list.front().m_ending_frame_idx = frameCount;
             m_keyframe_of_updating_list.front().m_pose_q = q_w_curr;
@@ -334,9 +340,9 @@ void process()
         }
 
         //25 26
-        if ( m_keyframe_of_updating_list.back().travel_length >= 55.0 )
+        if ( m_keyframe_of_updating_list.back().travel_length >= 40.0 )
         {
-            m_keyframe tk1;
+            tools::m_keyframe tk1;
             m_keyframe_of_updating_list.push_back(tk1);
         }
 
@@ -483,9 +489,47 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "laserMapping");
     ros::NodeHandle nh;
+    
+    // LiPMatch parameters.
+
+    float height_threshold;
+    float angle_threshold;
+    float dist_threshold;
+    float area_threshold;
+    float elongation_threshold;
+    float elongation_threshold2;
+    float dist_thresholdvpv;
+    float dist_thresholdvp;
+    float dist_thresholdp;
+    float dist_thresholdv;
+
+
+    const std::string ns = "/LiPMatch";
+    nh.getParam(ns + "/height_threshold", height_threshold);
+    nh.getParam(ns + "/angle_threshold", angle_threshold);
+    nh.getParam(ns + "/dist_threshold", dist_threshold);
+    nh.getParam(ns + "/area_threshold", area_threshold);
+    nh.getParam(ns + "/elongation_threshold", elongation_threshold);
+    nh.getParam(ns + "/elongation_threshold2", elongation_threshold2);
+    nh.getParam(ns + "/dist_thresholdvpv", dist_thresholdvpv);
+    nh.getParam(ns + "/dist_thresholdvp", dist_thresholdvp);
+    nh.getParam(ns + "/dist_thresholdp", dist_thresholdp);
+    nh.getParam(ns + "/dist_thresholdv", dist_thresholdv);
+
+
+    lipmatch.matcher.height_threshold = height_threshold;
+    lipmatch.matcher.angle_threshold = angle_threshold;
+    lipmatch.matcher.dist_threshold = dist_threshold;
+    lipmatch.matcher.area_threshold = area_threshold;
+    lipmatch.matcher.elongation_threshold = elongation_threshold;
+    lipmatch.matcher.elongation_threshold2 = elongation_threshold2;
+    lipmatch.matcher.dist_thresholdvpv = dist_thresholdvpv;
+    lipmatch.matcher.dist_thresholdvp = dist_thresholdvp;
+    lipmatch.matcher.dist_thresholdp = dist_thresholdp;
+    lipmatch.matcher.dist_thresholdv = dist_thresholdv;
 
 //	float planeRes = 0.8;
-    downSizeFilterKF.setLeafSize(0.4,0.4,0.4);
+    downSizeFilterKF.setLeafSize(0.2,0.2,0.2);
 
     pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_cloud_registered", 300);
 
@@ -508,7 +552,7 @@ int main(int argc, char **argv)
     m_pub_laser_aft_loopclosure_path = nh.advertise<nav_msgs::Path>( "/aft_loopclosure_path", 30000 );
 
 
-    m_keyframe tk;
+    tools::m_keyframe tk;
 
     m_keyframe_of_updating_list.push_back(tk);
 

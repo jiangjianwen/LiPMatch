@@ -12,34 +12,34 @@ namespace LiPMatch_ns {
             {
             public:
 
-    Subgraph(std::vector<Plane> &vPlanesI, const unsigned &refPlaneId)
+    Subgraph(std::vector<Plane> &vPlanesI)
     {
         vPlanes = vPlanesI;
-        subgraphPlanesIdx.insert(refPlaneId);
 
-        // Add neighbors co-visible neighbors
-        for(std::map<unsigned,unsigned>::iterator it = vPlanes[refPlaneId].neighborPlanes.begin(); it != vPlanes[refPlaneId].neighborPlanes.end(); it++)
-            subgraphPlanesIdx.insert(it->first);
+        for(size_t i = 0 ; i < vPlanes.size(); i++)
+        {
+            subgraphPlanesIdx.insert(i);
+        }
+
     };
 
-    Subgraph(std::vector<Vehicle> &vPlanesI, const unsigned &refPlaneId)
+    Subgraph(std::vector<Vehicle> &vPlanesI)
     {
         vVehicles = vPlanesI;
-        subgraphVehiclesIdx.insert(refPlaneId);
 
-        // Add neighbors co-visible neighbors
-        for(std::map<unsigned,unsigned>::iterator it = vVehicles[refPlaneId].neighborVehicles.begin(); it != vVehicles[refPlaneId].neighborVehicles.end(); it++)
-            subgraphVehiclesIdx.insert(it->first);
+        for(size_t i = 0 ; i < vVehicles.size(); i++)
+        {
+            subgraphVehiclesIdx.insert(i);
+        }
     };
 
-    Subgraph(std::vector<Pole> &vPlanesI, const unsigned &refPlaneId)
+    Subgraph(std::vector<Pole> &vPlanesI)
     {
         vPoles = vPlanesI;
-        subgraphPolesIdx.insert(refPlaneId);
-
-        // Add neighbors co-visible neighbors
-        for(std::map<unsigned,unsigned>::iterator it = vPoles[refPlaneId].neighborPoles.begin(); it != vPoles[refPlaneId].neighborPoles.end(); it++)
-            subgraphPolesIdx.insert(it->first);
+        for(size_t i = 0 ; i < vPoles.size(); i++)
+        {
+            subgraphPolesIdx.insert(i);
+        }
     };
 
 

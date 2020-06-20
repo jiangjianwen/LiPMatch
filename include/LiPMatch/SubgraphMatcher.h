@@ -9,17 +9,20 @@
 #include <Vehicle.h>
 
 namespace LiPMatch_ns {
-        
-        class SubgraphMatcher
-        {
-                public:
-                SubgraphMatcher();
-                
-                bool evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2);
+  
+  class SubgraphMatcher
+  {
+    public:
+    
+    SubgraphMatcher();
+    
+    bool evalUnaryConstraintsPlane(Plane &plane1, Plane &plane2);
 
-                bool evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &vehicle2);
+    bool evalUnaryConstraintsVehicle(Vehicle &vehicle1, Vehicle &vehicle2);
 
-                bool evalUnaryConstraintsPole(Pole &pole1, Pole &pole2);
+    bool evalUnaryConstraintsVehicleWithoutP(Vehicle &vehicle1, Vehicle &vehicle2);
+    
+    bool evalUnaryConstraintsPole(Pole &pole1, Pole &pole2);
 
     bool evalBinaryConstraints(Plane &plane1, Plane &plane2, Plane &planeA, Plane &planeB);
 
@@ -35,6 +38,8 @@ namespace LiPMatch_ns {
 
     void exploreSubgraphTreeRVehicleWithoutP(std::set<unsigned> &sourceVehicles, std::set<unsigned> &targetVehicles, std::map<unsigned, unsigned> &matched);
 
+
+    bool evalUnaryConstraintsPoleWithoutP(Pole &pole1, Pole &pole2);
 
     void exploreSubgraphTreeRPole(std::set<unsigned> &sourcePoles, std::set<unsigned> &targetPoles, std::map<unsigned, unsigned> &matched);
 
@@ -65,59 +70,26 @@ namespace LiPMatch_ns {
     Subgraph *subgraphTrg;
     
 
+    float height_threshold;
+    float angle_threshold;
+    float dist_threshold;
+    float area_threshold;
+    float elongation_threshold;
+    float elongation_threshold2;
+    float dist_thresholdvpv;
+    float dist_thresholdvp;
+    float dist_thresholdp;
+    float dist_thresholdv;
+    
+    std::vector<std::vector<int8_t> > hashUnaryConstraints;
 
+    std::map<unsigned, unsigned> allwinnerMatch;
 
-
-      float radios = 1.45;
-
-        float height_threshold = 1.45;
-
-        float angle_threshold = 1.30;
-
-        float dist_threshold = 1.45;
-
-
-        // float height_threshold = 1.25;
-
-        // float angle_threshold = 1.30;
-
-        // float dist_threshold = 1.25;
-
-
-
-        float area_threshold = 1.85;
-
-        float elongation_threshold = 1.85;
-
-        float elongation_threshold2 = 1.85;
-
-
-
-
-        float dist_thresholdvpv = 1.50;
-
-        float dist_thresholdvp = 1.40;
-
-
-        float dist_thresholdp = 1.03;
-
-
-        // float dist_thresholdv = 1.30;
-        float dist_thresholdv = 1.07;
-
-
-
-
-
-        std::vector<std::vector<int8_t> > hashUnaryConstraints;
-
-        std::map<unsigned, unsigned> allwinnerMatch;
-
-        std::vector<std::map<unsigned, unsigned> > allMatchGroups;
-        std::vector<int> allMatchGroupsSize;
-
-
-        std::vector<float> allMatchGroups_height;
+    std::vector<std::map<unsigned, unsigned> > allMatchGroups;
+    
+    std::vector<int> allMatchGroupsSize;
+    
+    std::vector<float> allMatchGroups_height;
         std::vector<float> allMatchGroups_normal;
         std::vector<float> allMatchGroups_dist_centers;
 

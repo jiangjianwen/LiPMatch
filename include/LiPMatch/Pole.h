@@ -2,8 +2,8 @@
 // Created by jjwen on 2020/3/2.
 //
 
-#ifndef MRPT_POLE_H
-#define MRPT_POLE_H
+#ifndef LiPMatch_POLE_H
+#define LiPMatch_POLE_H
 
 
 #include <Eigen/Eigen>
@@ -18,7 +18,7 @@ namespace LiPMatch_ns {
         class Pole
         {
         public:
-            Pole() : matched(false), PolePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>)
+            Pole() : PolePointCloudPtr(new pcl::PointCloud<pcl::PointXYZI>)
             {}
 
             void calcCenterAndElongation()
@@ -29,15 +29,16 @@ namespace LiPMatch_ns {
                 pcl::PCA< pcl::PointXYZI > pca;
                 pca.setInputCloud(PolePointCloudPtr);
                 eigenVal = pca.getEigenValues();
+                elongation = sqrt(eigenVal[0] / eigenVal[1]);
             }
 
             unsigned id;
             unsigned keyFrameId;
-            std::map<unsigned,unsigned> neighborPoles;
+
+            float elongation;
 
             Eigen::Vector3f v3center;
             Eigen::Vector3f eigenVal;
-            bool matched;
 
             pcl::PointCloud<pcl::PointXYZI>::Ptr PolePointCloudPtr;
         };
@@ -45,4 +46,4 @@ namespace LiPMatch_ns {
 
 
 
-#endif //MRPT_POLE_H
+#endif 

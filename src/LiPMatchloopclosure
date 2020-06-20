@@ -18,7 +18,6 @@ LiPMatch::LiPMatch() : LiPMatch_stop(false), LiPMatch_finished(false)
     map_rfn.set_down_sample_resolution( 0.75 );
 }
 
-
 //max_cos_normal=0.9848   // Two planar patches that represent the same surface must have similar normals -> cos(angle) s 1   (10�)
 //max_dist_center_plane=0.12  // Two planar patches that represent the same surface must have their center in the same plane
 //proximity_threshold=0.15  // Two planar patches that represent the same surface must overlap or be nearby
@@ -148,8 +147,6 @@ void LiPMatch::mergePlanes(Plane &updatePlane, Plane &discardPlane)
     discardPlane.elongation = updatePlane.elongation;
     discardPlane.areaVoxels = updatePlane.areaVoxels;
     discardPlane.areaHull = updatePlane.areaHull;
-    discardPlane.matched = updatePlane.matched;
-    discardPlane.eigenval = updatePlane.eigenval;
     *discardPlane.polygonContourPtr = *updatePlane.polygonContourPtr;
     *discardPlane.planePointCloudPtr = *updatePlane.planePointCloudPtr;
 ////    discardPlane = updatePlane;
@@ -383,8 +380,6 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
             laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
         }
 
-        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
-
         plane.calcConvexHull(plane.planePointCloudPtr,planen);
 
         plane.computeMassCenterAndArea();
@@ -401,26 +396,6 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 
 //    laserCloudOri_mp1 += *curPlanePoints;
 
-
-    // Merge detected planes with previous ones if they are the same
-    observedPlanes.clear();
-    vPlanes.clear();
-
-    for (size_t i = 0; i < detectedLocalPlanes.size (); i++)
-    {
-        detectedLocalPlanes[i].id = vPlanes.size();
-
-        // Update co-visibility graph
-        for(set<unsigned>::iterator it = observedPlanes.begin(); it != observedPlanes.end(); it++)
-        {
-            detectedLocalPlanes[i].neighborPlanes[*it] = 1;
-            vPlanes[*it].neighborPlanes[detectedLocalPlanes[i].id] = 1;
-        }
-        observedPlanes.insert(detectedLocalPlanes[i].id);
-        vPlanes.push_back(detectedLocalPlanes[i]);
-    }
-
-
     double time_endinSeg = pcl::getTime();
 
 //    std::cout<<"plane seg time: "<<time_endinSeg-time_behinSeg<<std::endl;
@@ -428,9 +403,9 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     std::shared_ptr<Maps_keyframe<float>> mk = std::make_shared<Maps_keyframe<float>>();
 
     std::cout<<"vPlanes.size() ";
-    std::cout<<vPlanes.size()<<std::endl;
+    std::cout<<detectedLocalPlanes.size()<<std::endl;
 
-    mk->vPlanes = vPlanes;
+    mk->vPlanes = detectedLocalPlanes;
     mk->m_accumulated_point_cloud = *c_keyframe.orilaserCloud;
 
 //    mk->m_accumulated_ng_pc = c_keyframe.g_laserCloud;
@@ -569,8 +544,8 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
             if (keyframe_vec[pointSearchInd[his]]->vPlanes.size() < 3)
                 continue;
 
-            Subgraph currentSubgraph(keyframe_vec[pointSearchInd[his]]->vPlanes, 0);
-            Subgraph targetSubgraph(last_keyframe->vPlanes, 0);
+            Subgraph currentSubgraph(keyframe_vec[pointSearchInd[his]]->vPlanes);
+            Subgraph targetSubgraph(last_keyframe->vPlanes);
 
             int unaycount;
             double time_begComp = pcl::getTime();
@@ -1077,8 +1052,6 @@ void LiPMatch::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
 //        {
 //            laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
 //        }
-//
-//        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
 //
 //        plane.calcConvexHull(plane.planePointCloudPtr,planen);
 //
@@ -2579,7 +2552,6 @@ LiPMatch::~LiPMatch()
 //            laserCloudInlier->points.push_back (pointsOnPlane->points[*pit]);
 //        }
 //
-//        pcl::copyPointCloud(*laserCloudInlier, *plane.InplanePointCloudOriPtr);
 //
 //
 //        plane.calcConvexHull(plane.planePointCloudPtr,planen);

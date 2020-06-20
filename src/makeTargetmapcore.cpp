@@ -10,11 +10,11 @@ using namespace Makemap_ns;
 
 Makemap::Makemap() : Makemap_stop(false), Makemap_finished(false)
 {
-    Makemap_hd = createThreadFromObjectMethod(this,&Makemap::run);
+    Makemap_hd = tools::createThreadFromObjectMethod(this,&Makemap::run);
 }
 
 
-void Makemap::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
+void Makemap::detectPlanesCloud( tools::m_keyframe &c_keyframe, int keyFrameCount)
 {
     static pcl::VoxelGrid<pcl::PointXYZI> grid_1;
     grid_1.setLeafSize(0.40,0.40,0.40);
@@ -28,7 +28,7 @@ void Makemap::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     
     pcl::StatisticalOutlierRemoval<pcl::PointXYZI> sor;
     sor.setInputCloud(c_keyframe.vehiclelaserCloud);
-    sor.setMeanK(10);   //设置在进行统计时考虑查询点邻近点数
+    sor.setMeanK(10);  
     sor.setStddevMulThresh(0.5);
     sor.setNegative(false);
     sor.filter(*c_keyframe.vehiclelaserCloud);
@@ -51,7 +51,7 @@ void Makemap::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     ec_vehicle.setClusterTolerance (0.205);
 //    ec.setMinClusterSize (100);
     ec_vehicle.setMinClusterSize (75);
-    ec_vehicle.setMaxClusterSize (7500);
+    ec_vehicle.setMaxClusterSize (15000);
     ec_vehicle.setSearchMethod (treeVehicle);
     ec_vehicle.setInputCloud (c_keyframe.vehiclelaserCloud);
     ec_vehicle.extract (cluster_indices_vehicle);
@@ -93,7 +93,7 @@ void Makemap::detectPlanesCloud( m_keyframe &c_keyframe, int keyFrameCount)
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec_nature;
     ec_nature.setClusterTolerance (0.21);
     ec_nature.setMinClusterSize (20);
-    ec_nature.setMaxClusterSize (750);
+    ec_nature.setMaxClusterSize (1500);
     ec_nature.setSearchMethod (treeNature);
     ec_nature.setInputCloud (c_keyframe.naturelaserCloud);
     ec_nature.extract (cluster_indices_nature);
@@ -315,7 +315,7 @@ void Makemap::genPlaneMap()
 
    std::cout<<"saving plane points ......."<<std::endl;
    std::cout<<"the number of extracted planes: "<<clusters.size()<<std::endl;
-   pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_structure_points.pcd", allPlanesBef);
+   pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_structure_points00.pcd", allPlanesBef);
 
    std::cout<<"done"<<std::endl;
 }
@@ -367,7 +367,7 @@ void Makemap::genCylinderMap()
 
     std::cout<<"saving cylinder points ......."<<std::endl;
     std::cout<<"the number of extracted cylinders: "<<colorid<<std::endl;
-    pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_cylinder_points.pcd", allCylindersBef);
+    pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_cylinder_points00.pcd", allCylindersBef);
     std::cout<<"done"<<std::endl;
 }
 
@@ -428,7 +428,7 @@ void Makemap::genVehicleMap()
 
    std::cout<<"saving vehicle points ......."<<std::endl;
    std::cout<<"the number of extracted vehicles: "<<colorid<<std::endl;
-   pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_vehicle_points.pcd", allVehiclesBef);
+   pcl::io::savePCDFileASCII ("/home/jjwen/software/catkin_rangenet_ws/src/map_vehicle_points00.pcd", allVehiclesBef);
 
    std::cout<<"done"<<std::endl;
 }
@@ -466,7 +466,7 @@ bool Makemap::stop_Makemap()
 
     cout << "Waiting for Makemap thread to die.." << endl;
 
-    joinThread(Makemap_hd);
+    tools::joinThread(Makemap_hd);
     Makemap_hd.clear();
 
     return true;
