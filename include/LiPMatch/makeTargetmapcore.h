@@ -39,33 +39,17 @@
 
 #include <tools.h>
 
-
-namespace Makemap_ns {
-    
-
+namespace Makemap_ns
+{
 
   class Makemap
   {
-   public:
-
-
-
-
-
-
-
-
-
+  public:
     Makemap();
 
+    ~Makemap();
 
-        void transformationfromMatches(std::vector<Eigen::Vector3d> m1, std::vector<Eigen::Vector3d> m2, Eigen::Matrix<float, 4, 4> *transform, Eigen::Vector3d & trans);
-
-
-          ~Makemap();
-
-
-   void genPlaneMap();
+    void genPlaneMap();
 
     void genCylinderMap();
 
@@ -88,35 +72,19 @@ namespace Makemap_ns {
     pcl::PointCloud<pcl::PointXYZI> allVehiclesBef;
     pcl::PointCloud<pcl::PointXYZI> allCylindersBef;
 
-
-
-
-
   private:
-
-
-
-
-
-      void detectPlanesCloud( tools::m_keyframe &c_keyframe, int keyFrameCount);
-
-
-
+    void detectPlanesCloud(tools::m_keyframe &c_keyframe, int keyFrameCount);
 
     tools::TThreadHandle Makemap_hd;
 
-    protected:
-
+  protected:
     std::set<unsigned> observedPlanes;
 
     std::set<unsigned> observedVehicles;
 
     std::set<unsigned> observedPoles;
+  };
 
-
-    };
-
- } // End of namespaces
-
+} // namespace Makemap_ns
 
 #endif

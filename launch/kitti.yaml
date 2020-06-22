@@ -1,4 +1,5 @@
 LiPMatch: {
+   isLocalize: true,
 
    height_threshold: 1.25,
 

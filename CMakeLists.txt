@@ -75,8 +75,8 @@ target_link_libraries(alaserMapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES
 		LiPMatch
 		)
 
-add_executable(loopclosureFast src/loopclosureFast.cpp)
-target_link_libraries(loopclosureFast ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} LiPMatch)
+#add_executable(loopclosureFast src/loopclosureFast.cpp)
+#target_link_libraries(loopclosureFast ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS} LiPMatch)
 
 
 add_executable(makeTargetMap src/makeTargetMap.cpp

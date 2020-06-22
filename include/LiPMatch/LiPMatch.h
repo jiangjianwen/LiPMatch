@@ -37,7 +37,7 @@
 
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
-#include <pcl/recognition/cg/geometric_consistency.h>  //几何一致性
+#include <pcl/recognition/cg/geometric_consistency.h> //几何一致性
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <pcl/registration/transformation_estimation_svd_scale.h>
 #include <pcl/registration/transformation_estimation_dual_quaternion.h>
@@ -47,15 +47,13 @@
 
 #include <tools.h>
 
+namespace LiPMatch_ns
+{
 
-namespace LiPMatch_ns {
-
-
-
-    template<typename DATA_TYPE>
-    class Maps_keyframe {
+    template <typename DATA_TYPE>
+    class Maps_keyframe
+    {
     public:
-
         double m_pose_buffer[7] = {0, 0, 0, 1, 0, 0, 0};
 
         Eigen::Map<Eigen::Quaterniond> m_pose_q = Eigen::Map<Eigen::Quaterniond>(m_pose_buffer);
@@ -82,7 +80,6 @@ namespace LiPMatch_ns {
 
         std::vector<Pole> vPoles;
 
-
         Maps_keyframe()
         {
             m_keyframe_idx = 0;
@@ -90,227 +87,226 @@ namespace LiPMatch_ns {
             vPoles.clear();
         };
 
-        ~Maps_keyframe() {};
-
-
+        ~Maps_keyframe(){};
     };
 
+    class LiPMatch
+    {
+    public:
+        struct Pose3d
+        {
+            Eigen::Matrix<double, 3, 1> p;
+            Eigen::Quaterniond q = Eigen::Quaterniond::Identity();
 
-  class LiPMatch
-  {
-   public:
+            // The name of the data type in the g2o file format.
+            static std::string name()
+            {
+                return "VERTEX_SE3:QUAT";
+            }
 
+            Pose3d() = default;
 
-      struct Pose3d {
-          Eigen::Matrix<double, 3, 1> p;
-          Eigen::Quaterniond q = Eigen::Quaterniond::Identity();
+            Pose3d(Eigen::Quaterniond &in_q, Eigen::Vector3d &in_t) : p(in_t), q(in_q){};
 
-          // The name of the data type in the g2o file format.
-          static std::string name() {
-              return "VERTEX_SE3:QUAT";
-          }
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        };
 
-          Pose3d() = default;
+        struct Constraint3d
+        {
+            int id_begin;
+            int id_end;
 
-          Pose3d(Eigen::Quaterniond &in_q, Eigen::Vector3d &in_t) : p(in_t), q(in_q) {};
+            // The transformation that represents the pose of the end frame E w.r.t. the
+            // begin frame B. In other words, it transforms a vector in the E frame to
+            // the B frame.
+            Pose3d t_be;
 
-          EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-      };
+            // The inverse of the covariance matrix for the measurement. The order of the
+            // entries are x, y, z, delta orientation.
+            Eigen::Matrix<double, 6, 6> information;
 
-      struct Constraint3d {
-          int id_begin;
-          int id_end;
+            Constraint3d()
+            {
+                information.setIdentity();
+            };
 
-          // The transformation that represents the pose of the end frame E w.r.t. the
-          // begin frame B. In other words, it transforms a vector in the E frame to
-          // the B frame.
-          Pose3d t_be;
-
-          // The inverse of the covariance matrix for the measurement. The order of the
-          // entries are x, y, z, delta orientation.
-          Eigen::Matrix<double, 6, 6> information;
-
-          Constraint3d() {
-              information.setIdentity();
-          };
-
-          Constraint3d(int id_begin, int id_end, Eigen::Quaterniond &q, Eigen::Vector3d &p) : id_begin(id_begin),
+            Constraint3d(int id_begin, int id_end, Eigen::Quaterniond &q, Eigen::Vector3d &p) : id_begin(id_begin),
                                                                                                 id_end(id_end),
-                                                                                                t_be(q, p) {
-              information.setIdentity();
-          };
+                                                                                                t_be(q, p)
+            {
+                information.setIdentity();
+            };
 
-          // The name of the data type in the g2o file format.
-          static std::string name() {
-              return "EDGE_SE3:QUAT";
-          }
+            // The name of the data type in the g2o file format.
+            static std::string name()
+            {
+                return "EDGE_SE3:QUAT";
+            }
 
-          EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-      };
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        };
 
-      typedef std::map<int, Pose3d, std::less<int>, Eigen::aligned_allocator<std::pair<const int, Pose3d> > > MapOfPoses;
-      typedef std::vector<Constraint3d, Eigen::aligned_allocator<Constraint3d> > VectorOfConstraints;
-      typedef std::vector<Pose3d, Eigen::aligned_allocator<Pose3d> > VectorOfPose;
+        typedef std::map<int, Pose3d, std::less<int>, Eigen::aligned_allocator<std::pair<const int, Pose3d>>> MapOfPoses;
+        typedef std::vector<Constraint3d, Eigen::aligned_allocator<Constraint3d>> VectorOfConstraints;
+        typedef std::vector<Pose3d, Eigen::aligned_allocator<Pose3d>> VectorOfPose;
 
+        class Mapping_refine
+        {
+        public:
+            pcl::VoxelGrid<pcl::PointXYZI> m_down_sample_filter;
 
-      class Mapping_refine
-      {
-      public:
-          pcl::VoxelGrid< pcl::PointXYZI > m_down_sample_filter;
+            MapOfPoses pose3d_map_oir, pose3d_map_opm;
+            pcl::PointCloud<pcl::PointXYZI> m_pts_aft_refind;
+            float m_down_sample_res = 0.2;
+            int m_step_skip = 2;
+            Mapping_refine()
+            {
+                set_down_sample_resolution(0.2);
+            };
 
-          MapOfPoses pose3d_map_oir, pose3d_map_opm;
-          pcl::PointCloud< pcl::PointXYZI > m_pts_aft_refind;
-          float                            m_down_sample_res = 0.2;
-          int                              m_step_skip = 2;
-          Mapping_refine()
-          {
-              set_down_sample_resolution(0.2);
-          };
+            void set_down_sample_resolution(float res)
+            {
+                m_down_sample_res = res;
+                m_down_sample_filter.setLeafSize(res, res, res);
+                //m_pts_aft_refind.reserve(1e8);
+            }
 
-          void set_down_sample_resolution(float res)
-          {
-              m_down_sample_res = res;
-              m_down_sample_filter.setLeafSize( res, res, res );
-              //m_pts_aft_refind.reserve(1e8);
-          }
+            template <typename T, typename PointType>
+            vector<Eigen::Matrix<T, 3, 1>> pcl_pts_to_eigen_pts(const typename pcl::PointCloud<PointType>::Ptr input_cloud)
+            {
+                vector<Eigen::Matrix<T, 3, 1>> out_res;
+                size_t pc_size = input_cloud->size();
+                out_res.resize(pc_size);
+                for (size_t i = 0; i < pc_size; i++)
+                {
+                    //out_res[ i ] << input_cloud->points[ i ]x, input_cloud->points[ i ].y, input_cloud->points[ i ].z;
+                    out_res[i] << input_cloud->points[i].x, input_cloud->points[i].y, input_cloud->points[i].z;
+                }
+                return out_res;
+            }
 
-          template < typename T, typename PointType >
-          vector< Eigen::Matrix< T, 3, 1 > > pcl_pts_to_eigen_pts( const typename pcl::PointCloud< PointType >::Ptr input_cloud )
-          {
-              vector< Eigen::Matrix< T, 3, 1 > > out_res;
-              size_t                             pc_size = input_cloud->size();
-              out_res.resize( pc_size );
-              for ( size_t i = 0; i < pc_size; i++ )
-              {
-                  //out_res[ i ] << input_cloud->points[ i ]x, input_cloud->points[ i ].y, input_cloud->points[ i ].z;
-                  out_res[i] << input_cloud->points[i].x, input_cloud->points[i].y, input_cloud->points[i].z;
-              }
-              return out_res;
-          }
+            template <typename TT, typename T>
+            TT eigen_to_pcl_pt(const T &pt)
+            {
+                TT res_pt;
+                res_pt.x = pt(0);
+                res_pt.y = pt(1);
+                res_pt.z = pt(2);
+                return res_pt;
+            }
 
-          template < typename TT, typename T >
-          TT eigen_to_pcl_pt( const T &pt )
-          {
-              TT res_pt;
-              res_pt.x = pt( 0 );
-              res_pt.y = pt( 1 );
-              res_pt.z = pt( 2 );
-              return res_pt;
-          }
+            template <typename PointType, typename T>
+            pcl::PointCloud<PointType> eigen_pt_to_pcl_pointcloud(const vector<T> &eigen_pt_vec)
+            {
+                pcl::PointCloud<PointType> pcl_pc_vec;
+                pcl_pc_vec.resize(eigen_pt_vec.size());
+                for (size_t i = 0; i < eigen_pt_vec.size(); i++)
+                {
+                    pcl_pc_vec[i] = eigen_to_pcl_pt<PointType>(eigen_pt_vec[i]);
+                }
+                return pcl_pc_vec;
+            }
 
+            template <typename T, typename TT>
+            static std::vector<Eigen::Matrix<T, 3, 1>> refine_pts(std::vector<Eigen::Matrix<T, 3, 1>> &raw_pt_vec,
+                                                                  const Eigen::Matrix<TT, 3, 3> &R_mat_ori, Eigen::Matrix<TT, 3, 1> &t_vec_ori,
+                                                                  const Eigen::Matrix<TT, 3, 3> &R_mat_opm, Eigen::Matrix<TT, 3, 1> &t_vec_opm)
+            {
+                std::vector<Eigen::Matrix<float, 3, 1>> opm_pt_vec;
+                opm_pt_vec.resize(raw_pt_vec.size());
+                Eigen::Matrix<T, 3, 3> R_aff = (R_mat_opm * R_mat_ori.transpose()).template cast<T>();
+                Eigen::Matrix<T, 3, 1> T_aff = (R_aff.template cast<TT>() * (-t_vec_ori) + t_vec_opm).template cast<T>();
 
-          template < typename PointType, typename T >
-          pcl::PointCloud<PointType> eigen_pt_to_pcl_pointcloud( const vector<T> & eigen_pt_vec )
-          {
-              pcl::PointCloud<PointType> pcl_pc_vec;
-              pcl_pc_vec.resize(eigen_pt_vec.size());
-              for (size_t i = 0; i< eigen_pt_vec.size() ; i++)
-              {
-                  pcl_pc_vec[ i ] = eigen_to_pcl_pt< PointType >( eigen_pt_vec[ i ] );
-              }
-              return pcl_pc_vec;
-          }
+                for (size_t i = 0; i < raw_pt_vec.size(); i++)
+                {
+                    opm_pt_vec[i] = R_aff * raw_pt_vec[i] + T_aff;
+                }
+                return opm_pt_vec;
+            }
 
-          template < typename T, typename TT >
-          static std::vector< Eigen::Matrix< T, 3, 1 > > refine_pts( std::vector< Eigen::Matrix< T, 3, 1 > > &raw_pt_vec,
-                                                                     const Eigen::Matrix< TT, 3, 3 > &R_mat_ori, Eigen::Matrix< TT, 3, 1 > &t_vec_ori,
-                                                                     const Eigen::Matrix< TT, 3, 3 > &R_mat_opm, Eigen::Matrix< TT, 3, 1 > &t_vec_opm )
-          {
-              std::vector< Eigen::Matrix< float, 3, 1 > > opm_pt_vec;
-              opm_pt_vec.resize( raw_pt_vec.size() );
-              Eigen::Matrix< T, 3, 3 > R_aff = ( R_mat_opm * R_mat_ori.transpose() ).template cast< T >();
-              Eigen::Matrix< T, 3, 1 > T_aff = ( R_aff.template cast< TT >() * ( -t_vec_ori ) + t_vec_opm ).template cast< T >();
+            pcl::PointCloud<pcl::PointXYZI> refine_pointcloud(std::map<int, pcl::PointCloud<pcl::PointXYZI>> &map_idx_pc,
+                                                              MapOfPoses &pose3d_map_oir,
+                                                              MapOfPoses &pose3d_map_opm,
+                                                              int idx = 0)
+            {
+                assert(map_idx_pc.size() == pose3d_map_oir.size());
+                assert(map_idx_pc.size() == pose3d_map_opm.size());
+                pcl::PointCloud<pcl::PointXYZI> pcl_pts;
+                auto it = std::next(map_idx_pc.begin(), idx);
+                if (it == map_idx_pc.end())
+                {
+                    return pcl_pts;
+                }
+                else
+                {
+                    int id = it->first;
+                    std::vector<Eigen::Matrix<float, 3, 1>> pts_vec_ori, pts_vec_opm;
+                    Pose3d pose_ori = pose3d_map_oir.find(id)->second;
+                    Pose3d pose_opm = pose3d_map_opm.find(id)->second;
+                    auto pc_in = map_idx_pc.find(id)->second.makeShared();
 
-              for ( size_t i = 0; i < raw_pt_vec.size(); i++ )
-              {
-                  opm_pt_vec[ i ] = R_aff * raw_pt_vec[ i ] + T_aff;
-              }
-              return opm_pt_vec;
-          }
+                    //                      m_down_sample_filter.setInputCloud( pc_in );
+                    //                      m_down_sample_filter.filter( *pc_in );
 
-          pcl::PointCloud< pcl::PointXYZI >  refine_pointcloud(  std::map<int, pcl::PointCloud< pcl::PointXYZI >> & map_idx_pc,
-                                                                 MapOfPoses & pose3d_map_oir,
-                                                                 MapOfPoses & pose3d_map_opm,
-                                                                 int idx = 0){
-              assert( map_idx_pc.size() == pose3d_map_oir.size() );
-              assert( map_idx_pc.size() == pose3d_map_opm.size() );
-              pcl::PointCloud< pcl::PointXYZI > pcl_pts;
-              auto it = std::next(map_idx_pc.begin(), idx);
-              if(it== map_idx_pc.end())
-              {
-                  return pcl_pts;
-              }
-              else
-              {
-                  int                         id = it->first;
-                  std::vector< Eigen::Matrix< float, 3, 1 > > pts_vec_ori, pts_vec_opm;
-                  Pose3d pose_ori = pose3d_map_oir.find( id )->second;
-                  Pose3d pose_opm = pose3d_map_opm.find( id )->second;
-                  auto pc_in =map_idx_pc.find(id)->second.makeShared();
+                    pts_vec_ori = pcl_pts_to_eigen_pts<float, pcl::PointXYZI>(pc_in);
 
-//                      m_down_sample_filter.setInputCloud( pc_in );
-//                      m_down_sample_filter.filter( *pc_in );
+                    pts_vec_opm = refine_pts(pts_vec_ori, pose_ori.q.toRotationMatrix(), pose_ori.p,
+                                             pose_opm.q.toRotationMatrix(), pose_opm.p);
+                    pcl_pts = eigen_pt_to_pcl_pointcloud<pcl::PointXYZI>(pts_vec_opm);
 
-                  pts_vec_ori = pcl_pts_to_eigen_pts< float, pcl::PointXYZI >( pc_in ) ;
+                    return pcl_pts;
+                    //m_down_sample_filter.setInputCloud( m_pts_aft_refind.makeShared() );
+                    //m_down_sample_filter.filter( m_pts_aft_refind );
+                }
+            }
 
-                  pts_vec_opm = refine_pts( pts_vec_ori, pose_ori.q.toRotationMatrix(), pose_ori.p,
-                                            pose_opm.q.toRotationMatrix(), pose_opm.p );
-                  pcl_pts = eigen_pt_to_pcl_pointcloud< pcl::PointXYZI >( pts_vec_opm );
+            void refine_mapping(std::map<int, pcl::PointCloud<pcl::PointXYZI>> &map_idx_pc,
+                                MapOfPoses &pose3d_map_oir,
+                                MapOfPoses &pose3d_map_opm)
+            {
+                assert(map_idx_pc.size() == pose3d_map_oir.size());
+                assert(map_idx_pc.size() == pose3d_map_opm.size());
 
-                  return pcl_pts;
-                  //m_down_sample_filter.setInputCloud( m_pts_aft_refind.makeShared() );
-                  //m_down_sample_filter.filter( m_pts_aft_refind );
-              }
-          }
+                std::vector<Eigen::Matrix<float, 3, 1>> pts_vec_ori, pts_vec_opm;
+                for (auto it = pose3d_map_oir.begin(); it != pose3d_map_oir.end(); it++)
+                {
+                    int id = it->first;
+                    Pose3d pose_ori = pose3d_map_oir.find(id)->second;
+                    Pose3d pose_opm = pose3d_map_opm.find(id)->second;
 
-          void refine_mapping(  std::map<int, pcl::PointCloud< pcl::PointXYZI >> & map_idx_pc,
-                                MapOfPoses & pose3d_map_oir,
-                                MapOfPoses & pose3d_map_opm )
-          {
-              assert( map_idx_pc.size() == pose3d_map_oir.size() );
-              assert( map_idx_pc.size() == pose3d_map_opm.size() );
+                    pts_vec_ori = pcl_pts_to_eigen_pts<float, pcl::PointXYZI>(map_idx_pc.find(id)->second.makeShared());
+                    pts_vec_opm = refine_pts(pts_vec_ori, pose_ori.q.toRotationMatrix(), pose_ori.p,
+                                             pose_opm.q.toRotationMatrix(), pose_opm.p);
+                    pcl::PointCloud<pcl::PointXYZI> pcl_pts = eigen_pt_to_pcl_pointcloud<pcl::PointXYZI>(pts_vec_opm);
 
-              std::vector< Eigen::Matrix< float, 3, 1 > > pts_vec_ori, pts_vec_opm;
-              for ( auto it = pose3d_map_oir.begin(); it != pose3d_map_oir.end(); it++ )
-              {
-                  int                         id = it->first;
-                  Pose3d pose_ori = pose3d_map_oir.find( id )->second;
-                  Pose3d pose_opm = pose3d_map_opm.find( id )->second;
+                    //                  m_down_sample_filter.setInputCloud( pcl_pts.makeShared() );
+                    //                  m_down_sample_filter.filter( pcl_pts );
+                    m_pts_aft_refind += pcl_pts;
+                    //m_down_sample_filter.setInputCloud( m_pts_aft_refind.makeShared() );
+                    //m_down_sample_filter.filter( m_pts_aft_refind );
+                    std::next(it, m_step_skip);
+                }
+            }
+        };
 
-                  pts_vec_ori = pcl_pts_to_eigen_pts< float, pcl::PointXYZI >( map_idx_pc.find(id)->second.makeShared() ) ;
-                  pts_vec_opm = refine_pts( pts_vec_ori, pose_ori.q.toRotationMatrix(), pose_ori.p,
-                                            pose_opm.q.toRotationMatrix(), pose_opm.p );
-                  pcl::PointCloud< pcl::PointXYZI > pcl_pts = eigen_pt_to_pcl_pointcloud< pcl::PointXYZI >( pts_vec_opm );
+        class PoseGraph3dErrorTerm
+        {
 
-//                  m_down_sample_filter.setInputCloud( pcl_pts.makeShared() );
-//                  m_down_sample_filter.filter( pcl_pts );
-                  m_pts_aft_refind += pcl_pts;
-                  //m_down_sample_filter.setInputCloud( m_pts_aft_refind.makeShared() );
-                  //m_down_sample_filter.filter( m_pts_aft_refind );
-                  std::next(it, m_step_skip);
-              }
-          }
+        public:
+            PoseGraph3dErrorTerm(const Pose3d &t_ab_measured,
+                                 const Eigen::Matrix<double, 6, 6> &sqrt_information)
+                : t_ab_measured_(t_ab_measured), sqrt_information_(sqrt_information) {}
 
-      };
+            template <typename T>
+            bool operator()(const T *const p_a_ptr, const T *const q_a_ptr,
+                            const T *const p_b_ptr, const T *const q_b_ptr,
+                            T *residuals_ptr) const
+            {
+                Eigen::Map<const Eigen::Matrix<T, 3, 1>> p_a(p_a_ptr);
+                Eigen::Map<const Eigen::Quaternion<T>> q_a(q_a_ptr);
 
-
-
-      class PoseGraph3dErrorTerm {
-
-      public:
-          PoseGraph3dErrorTerm(const Pose3d &t_ab_measured,
-                               const Eigen::Matrix<double, 6, 6> &sqrt_information)
-                               : t_ab_measured_(t_ab_measured), sqrt_information_(sqrt_information) {}
-
-          template<typename T>
-          bool operator()(const T *const p_a_ptr, const T *const q_a_ptr,
-                          const T *const p_b_ptr, const T *const q_b_ptr,
-                          T *residuals_ptr) const {
-              Eigen::Map<const Eigen::Matrix<T, 3, 1> > p_a(p_a_ptr);
-                Eigen::Map<const Eigen::Quaternion<T> > q_a(q_a_ptr);
-
-                Eigen::Map<const Eigen::Matrix<T, 3, 1> > p_b(p_b_ptr);
-                Eigen::Map<const Eigen::Quaternion<T> > q_b(q_b_ptr);
+                Eigen::Map<const Eigen::Matrix<T, 3, 1>> p_b(p_b_ptr);
+                Eigen::Map<const Eigen::Quaternion<T>> q_b(q_b_ptr);
 
                 // Compute the relative transformation between the two frames.
                 Eigen::Quaternion<T> q_a_inverse = q_a.conjugate();
@@ -321,14 +317,14 @@ namespace LiPMatch_ns {
 
                 // Compute the error between the two orientation estimates.
                 Eigen::Quaternion<T> delta_q =
-                        t_ab_measured_.q.template cast<T>() * q_ab_estimated.conjugate();
+                    t_ab_measured_.q.template cast<T>() * q_ab_estimated.conjugate();
 
                 // Compute the residuals.
                 // [ position         ]   [ delta_p          ]
                 // [ orientation (3x1)] = [ 2 * delta_q(0:2) ]
-                Eigen::Map<Eigen::Matrix<T, 6, 1> > residuals(residuals_ptr);
+                Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
                 residuals.template block<3, 1>(0, 0) =
-                        p_ab_estimated - t_ab_measured_.p.template cast<T>();
+                    p_ab_estimated - t_ab_measured_.p.template cast<T>();
                 residuals.template block<3, 1>(3, 0) = T(2.0) * delta_q.vec();
 
                 // Scale the residuals by the measurement uncertainty.
@@ -338,10 +334,11 @@ namespace LiPMatch_ns {
             }
 
             static ceres::CostFunction *Create(
-                    const Pose3d &t_ab_measured,
-                    const Eigen::Matrix<double, 6, 6> &sqrt_information) {
+                const Pose3d &t_ab_measured,
+                const Eigen::Matrix<double, 6, 6> &sqrt_information)
+            {
                 return new ceres::AutoDiffCostFunction<PoseGraph3dErrorTerm, 6, 3, 4, 3, 4>(
-                        new PoseGraph3dErrorTerm(t_ab_measured, sqrt_information));
+                    new PoseGraph3dErrorTerm(t_ab_measured, sqrt_information));
             }
 
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -353,61 +350,67 @@ namespace LiPMatch_ns {
             const Eigen::Matrix<double, 6, 6> sqrt_information_;
         };
 
-      bool OutputPoses(const std::string &filename, const MapOfPoses &poses) {
+        bool OutputPoses(const std::string &filename, const MapOfPoses &poses)
+        {
 
-           ofstream outfile(filename.c_str(), ios::trunc);
+            ofstream outfile(filename.c_str(), ios::trunc);
 
-           if (!outfile) {
+            if (!outfile)
+            {
                 LOG(ERROR) << "Error opening the file: " << filename;
                 return false;
             }
             for (std::map<int, Pose3d, std::less<int>,
-                    Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-                 const_iterator poses_iter = poses.begin();
-                 poses_iter != poses.end(); ++poses_iter) {
+                          Eigen::aligned_allocator<std::pair<const int, Pose3d>>>::
+                     const_iterator poses_iter = poses.begin();
+                 poses_iter != poses.end(); ++poses_iter)
+            {
 
                 const std::map<int, Pose3d, std::less<int>,
-                        Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-                value_type &pair = *poses_iter;
+                               Eigen::aligned_allocator<std::pair<const int, Pose3d>>>::
+                    value_type &pair = *poses_iter;
                 outfile << pair.first << " " << pair.second.p.transpose() << " "
                         << pair.second.q.x() << " " << pair.second.q.y() << " "
                         << pair.second.q.z() << " " << pair.second.q.w() << '\n';
 
-                std::cout<< pair.first << " " << pair.second.p.transpose() << " "
-                         << pair.second.q.x() << " " << pair.second.q.y() << " "
-                         << pair.second.q.z() << " " << pair.second.q.w() << '\n';
+                std::cout << pair.first << " " << pair.second.p.transpose() << " "
+                          << pair.second.q.x() << " " << pair.second.q.y() << " "
+                          << pair.second.q.z() << " " << pair.second.q.w() << '\n';
             }
 
-          outfile.close();
+            outfile.close();
 
-          return true;
+            return true;
         }
 
         void BuildOptimizationProblem(const VectorOfConstraints &constraints,
-                                      MapOfPoses *poses, ceres::Problem *problem) {
+                                      MapOfPoses *poses, ceres::Problem *problem)
+        {
 
-            if (constraints.empty()) {
+            if (constraints.empty())
+            {
                 std::cout << "No constraints, no problem to optimize." << std::endl;
                 return;
             }
 
             ceres::LossFunction *loss_function = NULL;
             ceres::LocalParameterization *quaternion_local_parameterization =
-                    new ceres::EigenQuaternionParameterization;
+                new ceres::EigenQuaternionParameterization;
 
             for (VectorOfConstraints::const_iterator constraints_iter =
-                    constraints.begin();
-                 constraints_iter != constraints.end(); ++constraints_iter) {
+                     constraints.begin();
+                 constraints_iter != constraints.end(); ++constraints_iter)
+            {
                 const Constraint3d &constraint = *constraints_iter;
 
                 MapOfPoses::iterator pose_begin_iter = poses->find(constraint.id_begin);
                 MapOfPoses::iterator pose_end_iter = poses->find(constraint.id_end);
 
                 const Eigen::Matrix<double, 6, 6> sqrt_information =
-                        constraint.information.llt().matrixL();
+                    constraint.information.llt().matrixL();
                 // Ceres will take ownership of the pointer.
                 ceres::CostFunction *cost_function =
-                        PoseGraph3dErrorTerm::Create(constraint.t_be, sqrt_information);
+                    PoseGraph3dErrorTerm::Create(constraint.t_be, sqrt_information);
 
                 problem->AddResidualBlock(cost_function, loss_function,
                                           pose_begin_iter->second.p.data(),
@@ -435,7 +438,8 @@ namespace LiPMatch_ns {
         }
 
         void pose_graph_optimization(MapOfPoses &poses,
-                                     VectorOfConstraints &constraints) {
+                                     VectorOfConstraints &constraints)
+        {
             ceres::Problem problem;
             BuildOptimizationProblem(constraints, &poses, &problem);
 
@@ -451,139 +455,88 @@ namespace LiPMatch_ns {
             std::cout << summary.IsSolutionUsable() << std::endl;
         }
 
+        LiPMatch();
 
-    LiPMatch();
+        void loadTargetMap();
 
+        ~LiPMatch();
 
-        void transformationfromMatches(std::vector<Eigen::Vector3d> m1, std::vector<Eigen::Vector3d> m2, Eigen::Matrix<float, 4, 4> *transform, Eigen::Vector3d & trans);
+        std::vector<Plane> mapPlanes;
 
+        std::vector<Vehicle> mapVehicles;
 
-          ~LiPMatch();
+        std::vector<Pole> mapPoles;
 
+        SubgraphMatcher matcher;
 
-      std::vector<Plane> mapPlanes;
+        // SubgraphMatcher matcher2;
 
-      std::vector<Vehicle> mapVehicles;
+        std::vector<double> v_icp;
 
-      std::vector<Pole> mapPoles;
+        MapOfPoses pose3d_map, pose3d_map_ori;
+        VectorOfPose pose3d_vec;
+        VectorOfConstraints constrain_vec;
 
-      SubgraphMatcher matcher;
+        MapOfPoses optimized_pose3d_map;
 
-            // SubgraphMatcher matcher2;
+        Mapping_refine map_rfn;
 
+        std::map<int, pcl::PointCloud<pcl::PointXYZI>> map_id_pc;
 
-    std::vector<double> v_icp;
+        pcl::PointCloud<pcl::PointXYZI> refined_pt;
 
+        pcl::PointCloud<pcl::PointXYZI> refined_pt_bef;
 
-    MapOfPoses          pose3d_map, pose3d_map_ori;
-    VectorOfPose        pose3d_vec;
-    VectorOfConstraints constrain_vec;
+        pcl::PointCloud<pcl::PointXYZI> same_laserCloud;
 
-    MapOfPoses          optimized_pose3d_map;
+        pcl::PointCloud<pcl::PointXYZI> same_laserCloud2;
 
-    Mapping_refine      map_rfn;
+        void run();
 
-    std::map<int, pcl::PointCloud<pcl::PointXYZI>> map_id_pc;
+        bool LiPMatch_stop;
 
+        bool LiPMatch_finished;
 
-    pcl::PointCloud< pcl::PointXYZI > refined_pt;
+        bool stop_LiPMatch();
 
-    pcl::PointCloud< pcl::PointXYZI > refined_pt_bef;
+        std::vector<tools::m_keyframe> frameQueue;
 
-    pcl::PointCloud<pcl::PointXYZI> same_laserCloud;
+        std::vector<std::shared_ptr<Maps_keyframe<float>>> keyframe_vec;
 
-    pcl::PointCloud<pcl::PointXYZI> same_laserCloud2;
+        Scene_alignment<float> scene_align;
 
-    void run();
+        //原始点云坐标
+        pcl::PointCloud<pcl::PointXYZI> laserCloudOri;
 
-    bool LiPMatch_stop;
+        pcl::PointCloud<pcl::PointXYZI> coeffSel;
 
-    bool LiPMatch_finished;
+        std::map<size_t, size_t> loop_closure_matchedid;
 
-    bool stop_LiPMatch();
+        pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m1;
+        pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m2;
 
-    void getGlobalPlaneMap();
+        pcl::PointCloud<pcl::PointXYZRGBA> laserCloudOri_m2_1;
 
-    std::vector<tools::m_keyframe> frameQueue;
+        pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp1;
 
-    std::vector<std::shared_ptr<Maps_keyframe<float>>> keyframe_vec;
+        pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp2;
 
-    Scene_alignment<float> scene_align;
+        pcl::KdTreeFLANN<pcl::PointXYZI> m_kdtree_kfs;
 
-    //原始点云坐标
-    pcl::PointCloud<pcl::PointXYZI> laserCloudOri;
+        pcl::PointCloud<pcl::PointXYZI> all_kfs_pose;
 
-    pcl::PointCloud<pcl::PointXYZI> coeffSel;
+        pcl::PointCloud<pcl::PointXYZI> mapToShow;
 
-    std::map<size_t,size_t> loop_closure_matchedid;
+        bool isLocalize = false;
 
-    pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m1;
-    pcl::PointCloud<pcl::PointXYZI> laserCloudOri_m2;
+    private:
+        void localize(tools::m_keyframe &c_keyframe, int keyFrameCount);
 
-    pcl::PointCloud<pcl::PointXYZRGBA> laserCloudOri_m2_1;
+        void loopClosure(tools::m_keyframe &c_keyframe, int keyFrameCount);
 
-    pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp1;
-
-    pcl::PointCloud<pcl::PointXYZI> laserCloudOri_mp2;
-
-    pcl::KdTreeFLANN< pcl::PointXYZI > m_kdtree_kfs;
-
-    pcl::PointCloud<pcl::PointXYZI> all_kfs_pose;
-
-    pcl::PointCloud<pcl::PointXYZI> mapToShow;
-
-    pcl::PointCloud<pcl::PointXYZI> localMap2;
-
-    int lmapsize = 0;
-
-    float swdif_height = 0.0;
-    float swdif_height2 = 0.0;
-    float swdif_normal = 0.0;
-    float swrel_dist_centers = 0.0;
-    float swal = 0.0;
-    float swea = 0.0;
-    int ssum = 0;
-
-
-
-
-  private:
-
-
-
-      /*!Transform the (x,y,z) coordinates of a PCL point into a Eigen::Vector3f.*/
-      template<class pointPCL>
-      Eigen::Vector3f getVector3fromPointXYZ(pointPCL &pt)
-      {
-          return Eigen::Vector3f(pt.x,pt.y,pt.z);
-      }
-
-      void mergePlanes(Plane &updatePlane, Plane &discardPlane);
-
-      void mergePlanes2(Plane &updatePlane, Plane &discardPlane);
-
-      void detectPlanesCloud( tools::m_keyframe &c_keyframe, int keyFrameCount);
-
-      bool arePlanesNearby(Plane &plane1, Plane &plane2, const float distThreshold);
-
-      bool areSamePlane(Plane &plane1, Plane &plane2, const float &cosAngleThreshold, const float &distThreshold, const float &proxThreshold);
-
-      bool areSameVehicle(Vehicle &vehicle1, Vehicle &vehicle2, const float &distThreshold);
-
-      bool areSamePole(Pole &pole1, Pole &pole2, const float &distThreshold);
-
-      void mergeVehicles(Vehicle &updateVehicle, Vehicle &discardVehicle);
-
-      void mergePoles(Pole &updatePole, Pole &discardPole);
-
-
-      tools::TThreadHandle LiPMatch_hd;
-
-
-
+        tools::TThreadHandle LiPMatch_hd;
     };
 
- } // End of namespaces
-
+} // namespace LiPMatch_ns
 
 #endif

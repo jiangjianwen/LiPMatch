@@ -5,7 +5,6 @@
 // Modifier: Tong Qin               qintonguav@gmail.com
 // 	         Shaozu Cao 		    saozu.cao@connect.ust.hk
 
-
 // Copyright 2013, Ji Zhang, Carnegie Mellon University
 // Further contributions copyright (c) 2016, Southwest Research Institute
 // All rights reserved.
@@ -54,7 +53,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
-#include <tf/tf.h>  // tf::Matrix3x3, tf::createQuaternionMsgFromRollPitchYaw, tf::Quaternion
+#include <tf/tf.h> // tf::Matrix3x3, tf::createQuaternionMsgFromRollPitchYaw, tf::Quaternion
 #include <eigen3/Eigen/Dense>
 #include <ceres/ceres.h>
 #include <mutex>
@@ -85,7 +84,7 @@ double parameters[7] = {0, 0, 0, 1, 0, 0, 0};
 Eigen::Map<Eigen::Quaterniond> q_w_curr(parameters);
 Eigen::Map<Eigen::Vector3d> t_w_curr(parameters + 4);
 
-Eigen::Vector3d t_w_prev(0.0,0.0,0.0);
+Eigen::Vector3d t_w_prev(0.0, 0.0, 0.0);
 
 pcl::VoxelGrid<PointType> downSizeFilterKF;
 
@@ -116,7 +115,12 @@ visualization_msgs::Marker line_list;
 
 visualization_msgs::Marker line_list2;
 
-LiPMatch lipmatch;
+std::shared_ptr<LiPMatch> lipmatch;
+
+// std::shared_ptr<LiPMatch> lipmatch = std::make_shared<LiPMatch>();
+
+
+// LiPMatch lipmatch;
 
 std::list<tools::m_keyframe> m_keyframe_of_updating_list;
 std::list<tools::m_keyframe> m_keyframe_need_precession_list;
@@ -129,11 +133,9 @@ std::vector<float> read_lidar_data(const std::string lidar_data_path)
     lidar_data_file.seekg(0, std::ios::beg);
 
     std::vector<float> lidar_data_buffer(num_elements);
-    lidar_data_file.read(reinterpret_cast<char*>(&lidar_data_buffer[0]), num_elements*sizeof(float));
+    lidar_data_file.read(reinterpret_cast<char *>(&lidar_data_buffer[0]), num_elements * sizeof(float));
     return lidar_data_buffer;
 }
-
-
 
 void pointAssociateToMap(PointType const *const pi, PointType *const po)
 {
@@ -149,18 +151,17 @@ void pointAssociateToMap(PointType const *const pi, PointType *const po)
 void process()
 {
 
-//    sensor_msgs::PointCloud2 TargetPointCloudOutMsg;
-//    pcl::toROSMsg(lipmatch.mapToShow, TargetPointCloudOutMsg);
-//    TargetPointCloudOutMsg.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-//    TargetPointCloudOutMsg.header.frame_id = "/camera_init";
-//    pubTargetMapLaserCloud.publish(TargetPointCloudOutMsg);
+    //    sensor_msgs::PointCloud2 TargetPointCloudOutMsg;
+    //    pcl::toROSMsg(lipmatch.mapToShow, TargetPointCloudOutMsg);
+    //    TargetPointCloudOutMsg.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+    //    TargetPointCloudOutMsg.header.frame_id = "/camera_init";
+    //    pubTargetMapLaserCloud.publish(TargetPointCloudOutMsg);
 
-//    std::ifstream timestamp_file("/home/jjwen/data/KITTI/odometry/00/pose.txt", std::ifstream::in);
+    //    std::ifstream timestamp_file("/home/jjwen/data/KITTI/odometry/00/pose.txt", std::ifstream::in);
 
     // std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05.txt", std::ifstream::in);
 
     std::ifstream timestamp_file("/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00.txt", std::ifstream::in);
-
 
     std::string line;
     std::size_t line_num = 0;
@@ -170,13 +171,13 @@ void process()
     // while (std::getline(timestamp_file, line) && ros::ok())
     while (std::getline(timestamp_file, line) && ros::ok() && line_num < 3300)
     {
-//        std::stringstream pose_stream(line);
-//        std::string s;
-//        for (std::size_t i = 0; i < 7; ++i)
-//        {
-//            std::getline(pose_stream, s, ' ');
-//            parameters[i] = stof(s);
-//        }
+        //        std::stringstream pose_stream(line);
+        //        std::string s;
+        //        for (std::size_t i = 0; i < 7; ++i)
+        //        {
+        //            std::getline(pose_stream, s, ' ');
+        //            parameters[i] = stof(s);
+        //        }
 
         std::vector<double> vdata;
         std::stringstream pose_stream(line);
@@ -191,7 +192,7 @@ void process()
         }
 
         Eigen::Matrix3d rotation_matrix;
-        rotation_matrix<<vdata[0],vdata[1],vdata[2],vdata[4],vdata[5],vdata[6],vdata[8],vdata[9],vdata[10];
+        rotation_matrix << vdata[0], vdata[1], vdata[2], vdata[4], vdata[5], vdata[6], vdata[8], vdata[9], vdata[10];
         Eigen::Quaterniond quat(rotation_matrix);
 
         parameters[0] = quat.z();
@@ -202,18 +203,17 @@ void process()
         parameters[5] = -vdata[3];
         parameters[6] = -vdata[7];
 
-
         pcl::PointCloud<pcl::PointXYZI> laserCloudIn;
 
         // string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/05/semantic/"+to_string(line_num)+".bin";
         // line_num++;
- 
+
         line_num++;
-        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/semantic/"+to_string(line_num)+".bin";
+        string binpath = "/media/jjwen/SBPD1_ddy/bk ubuntu18 6月7号/data/KITTI/odometry/00/semantic/" + to_string(line_num) + ".bin";
 
         // read lidar point cloud
         std::vector<float> lidar_data = read_lidar_data(binpath);
-//        std::cout << "totally " << lidar_data.size() / 4.0 << " points in this lidar frame \n";
+        //        std::cout << "totally " << lidar_data.size() / 4.0 << " points in this lidar frame \n";
         for (std::size_t i = 0; i < lidar_data.size(); i += 4)
         {
             pcl::PointXYZI point;
@@ -231,8 +231,8 @@ void process()
         pcl::PointCloud<pcl::PointXYZI>::Ptr nature_points(new pcl::PointCloud<pcl::PointXYZI>());
         pcl::PointCloud<pcl::PointXYZI>::Ptr ground_points(new pcl::PointCloud<pcl::PointXYZI>());
 
-
-        for (uint32_t i = 0; i < num_points; ++i) {
+        for (uint32_t i = 0; i < num_points; ++i)
+        {
 
             int label = int(laserCloudIn.points[i].intensity);
 
@@ -241,15 +241,18 @@ void process()
                 ground_points->points.push_back(laserCloudIn.points[i]);
             }
             //structure
-            else if (label == 50 || label == 51 || label == 52 || label == 60) {
+            else if (label == 50 || label == 51 || label == 52 || label == 60)
+            {
                 structure_points->points.push_back(laserCloudIn.points[i]);
             }
-                //vehicle
-            else if (label == 10 || label == 13 || label == 18 || label == 16) {
+            //vehicle
+            else if (label == 10 || label == 13 || label == 18 || label == 16)
+            {
                 vehicle_points->points.push_back(laserCloudIn.points[i]);
             }
-                //cylinder
-            else if (label == 71 || label == 80) {
+            //cylinder
+            else if (label == 71 || label == 80)
+            {
                 nature_points->points.push_back(laserCloudIn.points[i]);
             }
         }
@@ -265,7 +268,6 @@ void process()
 
         downSizeFilterKF.setInputCloud(ground_points);
         downSizeFilterKF.filter(*ground_points);
-
 
         for (int i = 0; i < structure_points->points.size(); i++)
         {
@@ -287,15 +289,15 @@ void process()
             pointAssociateToMap(&ground_points->points[i], &ground_points->points[i]);
         }
 
-        for(auto it = m_keyframe_of_updating_list.begin(); it != m_keyframe_of_updating_list.end(); it++ )
+        for (auto it = m_keyframe_of_updating_list.begin(); it != m_keyframe_of_updating_list.end(); it++)
         {
             *(it->structurelaserCloud) += *structure_points;
             *(it->vehiclelaserCloud) += *vehicle_points;
             *(it->naturelaserCloud) += *nature_points;
             *(it->g_laserCloud) += *ground_points;
             it->framecount++;
-            it->travel_length += sqrt((t_w_curr[0]-t_w_prev[0])*(t_w_curr[0]-t_w_prev[0])+
-                                      (t_w_curr[1]-t_w_prev[1])*(t_w_curr[1]-t_w_prev[1])+(t_w_curr[2]-t_w_prev[2])*(t_w_curr[2]-t_w_prev[2]));
+            it->travel_length += sqrt((t_w_curr[0] - t_w_prev[0]) * (t_w_curr[0] - t_w_prev[0]) +
+                                      (t_w_curr[1] - t_w_prev[1]) * (t_w_curr[1] - t_w_prev[1]) + (t_w_curr[2] - t_w_prev[2]) * (t_w_curr[2] - t_w_prev[2]));
         }
 
         t_w_prev = t_w_curr;
@@ -320,15 +322,15 @@ void process()
         points.color.a = 1.0;
 
         //30 32
-        if ( m_keyframe_of_updating_list.front().travel_length >= 50.0 )
+        if (m_keyframe_of_updating_list.front().travel_length >= 50.0)
         {
             m_keyframe_of_updating_list.front().m_ending_frame_idx = frameCount;
             m_keyframe_of_updating_list.front().m_pose_q = q_w_curr;
-            m_keyframe_of_updating_list.front().m_pose_t =  t_w_curr;
-            m_keyframe_need_precession_list.push_back( m_keyframe_of_updating_list.front() );
+            m_keyframe_of_updating_list.front().m_pose_t = t_w_curr;
+            m_keyframe_need_precession_list.push_back(m_keyframe_of_updating_list.front());
             m_keyframe_of_updating_list.pop_front();
 
-            lipmatch.frameQueue.push_back(m_keyframe_need_precession_list.back());
+            lipmatch->frameQueue.push_back(m_keyframe_need_precession_list.back());
 
             geometry_msgs::Point p;
             p.x = t_w_curr.x();
@@ -340,26 +342,26 @@ void process()
         }
 
         //25 26
-        if ( m_keyframe_of_updating_list.back().travel_length >= 40.0 )
+        if (m_keyframe_of_updating_list.back().travel_length >= 40.0)
         {
             tools::m_keyframe tk1;
             m_keyframe_of_updating_list.push_back(tk1);
         }
 
         sensor_msgs::PointCloud2 matchedCloudOutMsg1;
-        pcl::toROSMsg(lipmatch.laserCloudOri_m1, matchedCloudOutMsg1);
+        pcl::toROSMsg(lipmatch->laserCloudOri_m1, matchedCloudOutMsg1);
         matchedCloudOutMsg1.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         matchedCloudOutMsg1.header.frame_id = "/camera_init";
         pubMatchedPoints1.publish(matchedCloudOutMsg1);
 
-//        sensor_msgs::PointCloud2 matchedCloudOutMsg2;
-//        pcl::toROSMsg(lipmatch.laserCloudOri_m2_1, matchedCloudOutMsg2);
-//        matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-//        matchedCloudOutMsg2.header.frame_id = "/camera_init";
-//        pubMatchedPoints2.publish(matchedCloudOutMsg2);
+        //        sensor_msgs::PointCloud2 matchedCloudOutMsg2;
+        //        pcl::toROSMsg(lipmatch.laserCloudOri_m2_1, matchedCloudOutMsg2);
+        //        matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        //        matchedCloudOutMsg2.header.frame_id = "/camera_init";
+        //        pubMatchedPoints2.publish(matchedCloudOutMsg2);
 
         sensor_msgs::PointCloud2 matchedCloudOutMsg2;
-        pcl::toROSMsg(lipmatch.laserCloudOri_m2, matchedCloudOutMsg2);
+        pcl::toROSMsg(lipmatch->laserCloudOri_m2, matchedCloudOutMsg2);
         matchedCloudOutMsg2.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         matchedCloudOutMsg2.header.frame_id = "/camera_init";
         pubMatchedPoints2.publish(matchedCloudOutMsg2);
@@ -390,7 +392,8 @@ void process()
         line_list.color.g = 1.0f;
         line_list.color.a = 1.0;
 
-        for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
+        for (map<size_t, size_t>::iterator it = lipmatch->loop_closure_matchedid.begin(); it != lipmatch->loop_closure_matchedid.end(); it++)
+        {
             geometry_msgs::Point p1 = points.points[it->first];
             geometry_msgs::Point p2 = points.points[it->second];
             line_list.points.push_back(p1);
@@ -399,20 +402,20 @@ void process()
 
         marker_keyframe_pub.publish(line_list);
 
-//        sensor_msgs::PointCloud2 laserCloudFullRes3;
-//        pcl::toROSMsg(lipmatch.refined_pt, laserCloudFullRes3);
-//        laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserOdometry);
-//        laserCloudFullRes3.header.frame_id = "/camera_init";
-//        pubLaserCloudFullRes.publish(laserCloudFullRes3);
+        //        sensor_msgs::PointCloud2 laserCloudFullRes3;
+        //        pcl::toROSMsg(lipmatch.refined_pt, laserCloudFullRes3);
+        //        laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserOdometry);
+        //        laserCloudFullRes3.header.frame_id = "/camera_init";
+        //        pubLaserCloudFullRes.publish(laserCloudFullRes3);
 
         sensor_msgs::PointCloud2 laserCloudFullRes3;
-        pcl::toROSMsg(lipmatch.same_laserCloud, laserCloudFullRes3);
+        pcl::toROSMsg(lipmatch->same_laserCloud, laserCloudFullRes3);
         laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         laserCloudFullRes3.header.frame_id = "/camera_init";
         pubLaserCloudFullRes.publish(laserCloudFullRes3);
 
         sensor_msgs::PointCloud2 laserCloudFullRes4;
-        pcl::toROSMsg(lipmatch.same_laserCloud2, laserCloudFullRes4);
+        pcl::toROSMsg(lipmatch->same_laserCloud2, laserCloudFullRes4);
         laserCloudFullRes4.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         laserCloudFullRes4.header.frame_id = "/camera_init";
         pubLaserCloudFullResbef.publish(laserCloudFullRes4);
@@ -472,7 +475,8 @@ void process()
     line_list2.color.g = 1.0f;
     line_list2.color.a = 1.0;
 
-    for (map<size_t, size_t>::iterator it = lipmatch.loop_closure_matchedid.begin(); it != lipmatch.loop_closure_matchedid.end(); it++) {
+    for (map<size_t, size_t>::iterator it = lipmatch->loop_closure_matchedid.begin(); it != lipmatch->loop_closure_matchedid.end(); it++)
+    {
         geometry_msgs::Point p1 = points.points[it->first];
         geometry_msgs::Point p2 = points.points[it->second];
         line_list2.points.push_back(p1);
@@ -480,18 +484,16 @@ void process()
     }
 
     marker_keyframe_pub.publish(line_list2);
-
 }
-
-
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "laserMapping");
     ros::NodeHandle nh;
-    
-    // LiPMatch parameters.
 
+    lipmatch = std::make_shared<LiPMatch>();
+
+    // LiPMatch parameters.
     float height_threshold;
     float angle_threshold;
     float dist_threshold;
@@ -502,7 +504,7 @@ int main(int argc, char **argv)
     float dist_thresholdvp;
     float dist_thresholdp;
     float dist_thresholdv;
-
+    bool isLocalize = false;
 
     const std::string ns = "/LiPMatch";
     nh.getParam(ns + "/height_threshold", height_threshold);
@@ -515,21 +517,26 @@ int main(int argc, char **argv)
     nh.getParam(ns + "/dist_thresholdvp", dist_thresholdvp);
     nh.getParam(ns + "/dist_thresholdp", dist_thresholdp);
     nh.getParam(ns + "/dist_thresholdv", dist_thresholdv);
+    nh.getParam(ns + "/isLocalize", isLocalize);
 
 
-    lipmatch.matcher.height_threshold = height_threshold;
-    lipmatch.matcher.angle_threshold = angle_threshold;
-    lipmatch.matcher.dist_threshold = dist_threshold;
-    lipmatch.matcher.area_threshold = area_threshold;
-    lipmatch.matcher.elongation_threshold = elongation_threshold;
-    lipmatch.matcher.elongation_threshold2 = elongation_threshold2;
-    lipmatch.matcher.dist_thresholdvpv = dist_thresholdvpv;
-    lipmatch.matcher.dist_thresholdvp = dist_thresholdvp;
-    lipmatch.matcher.dist_thresholdp = dist_thresholdp;
-    lipmatch.matcher.dist_thresholdv = dist_thresholdv;
+    lipmatch->matcher.height_threshold = height_threshold;
+    lipmatch->matcher.angle_threshold = angle_threshold;
+    lipmatch->matcher.dist_threshold = dist_threshold;
+    lipmatch->matcher.area_threshold = area_threshold;
+    lipmatch->matcher.elongation_threshold = elongation_threshold;
+    lipmatch->matcher.elongation_threshold2 = elongation_threshold2;
+    lipmatch->matcher.dist_thresholdvpv = dist_thresholdvpv;
+    lipmatch->matcher.dist_thresholdvp = dist_thresholdvp;
+    lipmatch->matcher.dist_thresholdp = dist_thresholdp;
+    lipmatch->matcher.dist_thresholdv = dist_thresholdv;
 
-//	float planeRes = 0.8;
-    downSizeFilterKF.setLeafSize(0.2,0.2,0.2);
+    lipmatch->isLocalize = isLocalize;
+
+    lipmatch->loadTargetMap();
+
+    //	float planeRes = 0.8;
+    downSizeFilterKF.setLeafSize(0.2, 0.2, 0.2);
 
     pubLaserCloudFullRes = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_cloud_registered", 300);
 
@@ -549,8 +556,7 @@ int main(int argc, char **argv)
 
     pubEachFrameLaserCloud = nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_each_frame", 300);
 
-    m_pub_laser_aft_loopclosure_path = nh.advertise<nav_msgs::Path>( "/aft_loopclosure_path", 30000 );
-
+    m_pub_laser_aft_loopclosure_path = nh.advertise<nav_msgs::Path>("/aft_loopclosure_path", 30000);
 
     tools::m_keyframe tk;
 
